@@ -1,6 +1,4 @@
-# #most recent working code, AGR 090824 @ 2:48pm EST
-###potentially more interactive, visually appealing
-#Required packages
+###most recent working code, AGR 090824 @ 4:54pm EST
 library(shiny)
 library(shinydashboard)
 library(shinyjs)
@@ -25,22 +23,31 @@ library(GenomicRanges)
 library(stringr)
 library(BiocParallel)
 library(msa)
+library(renv)
+setwd("~/Z-GENIE-Master")
+# renv::init()
+# renv::snapshot()
+# renv::activate()
+# renv::restore()
 
 ui <- dashboardPage(
-    dashboardHeader(title = "Z-GENIE"),
-    dashboardSidebar(
-        sidebarMenu(
-            menuItem("Home", tabName = "home", icon = icon("home")),
-            menuItem("Run and Process", tabName = "run_process", icon = icon("cogs")),
-            menuItem("Visualization", tabName = "visualization", icon = icon("chart-bar")),
-            menuItem("MSA and Tree", tabName = "msa_tree", icon = icon("tree"))
-        )
+  dashboardHeader(title = "Z-GENIE"),
+  dashboardSidebar(sidebarMenu(
+    menuItem("Home", tabName = "home", icon = icon("home")),
+    menuItem("Run and Process", tabName = "run_process", icon = icon("cogs")),
+    menuItem(
+      "Visualization",
+      tabName = "visualization",
+      icon = icon("chart-bar")
     ),
-    
-    dashboardBody(
-        useShinyjs(),
-        tags$head(
-            tags$style(HTML("
+    menuItem("MSA and Tree", tabName = "msa_tree", icon = icon("tree"))
+  )),
+  
+  dashboardBody(
+    useShinyjs(),
+    tags$head(tags$style(
+      HTML(
+        "
         .content-wrapper {
           background-color: #f4f6f9 !important;
         }
@@ -78,124 +85,124 @@ ui <- dashboardPage(
           border: none;
           box-shadow: none;
         }
-      "))
-        ),
-        
-        tabItems(
-            # Home Tab
-            tabItem(tabName = "home", 
-                    fluidRow(
-                        box(
-                            title = "Welcome to Z-GENIE",
-                            status = "primary",
-                            solidHeader = TRUE,
-                            width = 12,
-                            h4("Z-GENIE (Z-DNA GENomic Information Extractor)"),
-                            p("This tool helps analyze Z-DNA genomic information using custom FASTA sequences or Z-Hunt output. You can either fetch sequences from NCBI or manually input data.")
-                        )
-                    )
-            ),
-            
-            # Run and Process Tab
-            tabItem(tabName = "run_process", 
-                    fluidRow(
-                        box(
-                            title = "Step 1: Run and Process",
-                            status = "info",
-                            solidHeader = TRUE,
-                            width = 12,
-                            collapsible = TRUE,
-                            
-                            checkboxInput("skip_steps", "Skip Fetch and Run Z-Hunt", value = FALSE),
-                            
-                            conditionalPanel(
-                                condition = "input.skip_steps == false",
-                                textInput("nucleotide_id", "Enter Nucleotide ID (e.g., U81553.1)", value = ""),
-                                actionButton("fetch", "Fetch and Save FASTA"),
-                                textInput("fasta_path", "Enter Path to FASTA File", value = "Path/to/file/yourfile.fasta"),
-                                textInput("params", "Z-Hunt Parameters", value = "8 6 8"),
-                                actionButton("run", "Run Z-Hunt"),
-                                numericInput("zscore_threshold", "Manual Z-Score Threshold", value = 600)
-                            ),
-                            
-                            conditionalPanel(
-                                condition = "input.skip_steps == true",
-                                textInput("manual_fasta_path", "Enter Path to Original FASTA File (with >)", value = "Path/to/original.fasta"),
-                                textInput("manual_zscore_path", "Enter Path to Z-SCORE File", value = "Path/to/zscore.Z-SCORE"),
-                                numericInput("manual_zscore_threshold", "Manual Z-Score Threshold", value = 600)
-                            ),
-                            
-                            actionButton("process", "Process Z-SCORE File"),
-                            textInput("download_name", "Enter Download File Name", value = "Filtered_Z_GENIE_output"),
-                            downloadButton('download', 'Download Processed Data'),
-                            DTOutput("data_table"),
-                            verbatimTextOutput("fetch_output"),
-                            verbatimTextOutput("output"),
-                            verbatimTextOutput("command_output"),
-                            verbatimTextOutput("final_output")
-                        )
-                    )
-            ),
-            
-            # Visualization Tab
-            tabItem(tabName = "visualization",
-                    fluidRow(
-                        box(
-                            title = "ZFS Visualization",
-                            status = "info",
-                            solidHeader = TRUE,
-                            width = 12,
-                            collapsible = TRUE,
-                            sidebarLayout(
-                                sidebarPanel(
-                                    fileInput("file", "Upload CSV file", buttonLabel = "Browse..."),
-                                    hr(),
-                                    h4("Filter DataTable"),
-                                    hr(),
-                                    h4("Plotly Configuration"),
-                                    selectInput("x", "X-axis:", choices = NULL, selected = "start"),
-                                    selectInput("y", "Y-axis:", choices = NULL, selected = "log10_ZScore"),
-                                    selectInput("color", "Color by:", choices = NULL, selected = "ISS"),
-                                    DTOutput("table", width = "auto"),
-                                    downloadButton("download2", "Download Filtered Data")
-                                ),
-                                mainPanel(
-                                    plotlyOutput("plot")
-                                )
-                            )
-                        )
-                    )
-            ),
-            # Modified MSA and Tree Tab (MSA on top, Tree at the bottom)
-            tabItem(tabName = "msa_tree", 
-                    fluidRow(
-                        column(
-                            width = 12,  # Full width
-                            box(
-                                title = "Multiple Sequence Alignment", status = "info", solidHeader = TRUE, width = 12,
-                                selectInput(
-                                    "alignment_method",
-                                    "Alignment Method",
-                                    choices = c("ClustalW", "ClustalOmega", "Muscle"),
-                                    selected = "ClustalW"
-                                ),
-                                msaROutput("msa", width = "100%", height = "auto")  # Set appropriate height for the MSA output
-                            )
-                        )
-                    ),
-                    fluidRow(
-                        column(
-                            width = 12,  # Full width
-                            box(
-                                title = "Phylogenetic Tree", status = "info", solidHeader = TRUE, width = 12,
-                                plotOutput("tree", height = "1500px")  # Set appropriate height for the tree plot
-                            )
-                        )
-                    )
-            )
-            
+      "
+      )
+    )),
+    
+    tabItems(
+      # Home Tab
+      tabItem(tabName = "home", fluidRow(
+        box(
+          title = "Welcome to Z-GENIE",
+          status = "primary",
+          solidHeader = TRUE,
+          width = 12,
+          h4("Z-GENIE (Z-DNA GENomic Information Extractor)"),
+          p(
+            "This tool helps analyze Z-DNA genomic information using custom FASTA sequences or Z-Hunt output. You can either fetch sequences from NCBI or manually input data."
+          )
         )
+      )),
+      
+      # Run and Process Tab
+      tabItem(tabName = "run_process", fluidRow(
+        box(
+          title = "Step 1: Run and Process",
+          status = "info",
+          solidHeader = TRUE,
+          width = 12,
+          collapsible = TRUE,
+          
+          checkboxInput("skip_steps", "Skip Fetch and Run Z-Hunt", value = FALSE),
+          
+          conditionalPanel(
+            condition = "input.skip_steps == false",
+            textInput("nucleotide_id", "Enter Nucleotide ID (e.g., U81553.1)", value = ""),
+            actionButton("fetch", "Fetch and Save FASTA"),
+            textInput("fasta_path", "Enter Path to FASTA File", value = "Path/to/file/yourfile.fasta"),
+            textInput("params", "Z-Hunt Parameters", value = "8 6 8"),
+            actionButton("run", "Run Z-Hunt"),
+            numericInput("zscore_threshold", "Manual Z-Score Threshold", value = 600)
+          ),
+          
+          conditionalPanel(
+            condition = "input.skip_steps == true",
+            textInput(
+              "manual_fasta_path",
+              "Enter Path to Original FASTA File (with >)",
+              value = "Path/to/original.fasta"
+            ),
+            textInput("manual_zscore_path", "Enter Path to Z-SCORE File", value = "Path/to/zscore.Z-SCORE"),
+            numericInput("manual_zscore_threshold", "Manual Z-Score Threshold", value = 600)
+          ),
+          
+          actionButton("process", "Process Z-SCORE File"),
+          textInput("download_name", "Enter Download File Name", value = "Filtered_Z_GENIE_output"),
+          downloadButton('download', 'Download Processed Data'),
+          DTOutput("data_table"),
+          verbatimTextOutput("fetch_output"),
+          verbatimTextOutput("output"),
+          verbatimTextOutput("command_output"),
+          verbatimTextOutput("final_output")
+        )
+      )),
+      
+      # Visualization Tab
+      tabItem(tabName = "visualization", fluidRow(
+        box(
+          title = "ZFS Visualization",
+          status = "info",
+          solidHeader = TRUE,
+          width = 12,
+          collapsible = TRUE,
+          sidebarLayout(
+            sidebarPanel(
+              fileInput("file", "Upload CSV file", buttonLabel = "Browse..."),
+              hr(),
+              h4("Filter DataTable"),
+              hr(),
+              h4("Plotly Configuration"),
+              selectInput("x", "X-axis:", choices = NULL, selected = "start"),
+              selectInput("y", "Y-axis:", choices = NULL, selected = "log10_ZScore"),
+              selectInput("color", "Color by:", choices = NULL, selected = "ISS"),
+              DTOutput("table", width = "auto"),
+              downloadButton("download2", "Download Filtered Data")
+            ),
+            mainPanel(plotlyOutput("plot"))
+          )
+        )
+      )),
+      # Modified MSA and Tree Tab (MSA on top, Tree at the bottom)
+      tabItem(tabName = "msa_tree", fluidRow(column(
+        width = 12,
+        # Full width
+        box(
+          title = "Multiple Sequence Alignment",
+          status = "info",
+          solidHeader = TRUE,
+          width = 12,
+          selectInput(
+            "alignment_method",
+            "Alignment Method",
+            choices = c("ClustalW", "ClustalOmega", "Muscle"),
+            selected = "ClustalW"
+          ),
+          msaROutput("msa", width = "100%", height = "auto")  # Set appropriate height for the MSA output
+        )
+      )), fluidRow(column(
+        width = 12,
+        # Full width
+        box(
+          title = "Phylogenetic Tree",
+          status = "info",
+          solidHeader = TRUE,
+          width = 12,
+          plotOutput("tree", height = "1500px")  # Set appropriate height for the tree plot
+        )
+      )))
+      
     )
+  )
 )
 
 
@@ -221,16 +228,16 @@ server <- function(input, output, session) {
       }
     }
   }
-
+  
   # Check for 'git' and 'gcc' availability, install if missing
   check_command("git", "sudo apt-get install git -y")
   check_command("gcc", "sudo apt-get install gcc -y")
-
+  
   # Clone the Z-Hunt-III repository from GitHub if not already done
   if (!file.exists("zhunt")) {
     system("git clone https://github.com/Ho-Lab-Colostate/zhunt.git")
   }
-
+  
   # Helper function to preprocess the FASTA file (remove >)
   preprocess_fasta <- function(file_path) {
     fasta_lines <- readLines(file_path)
@@ -239,7 +246,7 @@ server <- function(input, output, session) {
       writeLines(fasta_lines, file_path)
     }
   }
-
+  
   # Fetch FASTA from NCBI
   fetch_and_save_fasta <- function(nucleotide_id) {
     fasta <- rentrez::entrez_fetch(db = "nucleotide",
@@ -249,7 +256,7 @@ server <- function(input, output, session) {
     write(fasta, file = file_name)
     return(file_name)
   }
-
+  
   # Remove the first line from a .fasta.Z-SCORE file if it starts with "/"
   remove_first_line <- function(file_path) {
     lines <- readLines(file_path)
@@ -258,21 +265,21 @@ server <- function(input, output, session) {
     }
     writeLines(lines, file_path)
   }
-
+  
   # Run Z-Hunt
   run_zhunt <- function(input_file, params) {
     zhunt_path <- normalizePath("zhunt")
     Z_path <- file.path(zhunt_path, "bin", "zhunt")
-
+    
     modified_fasta_file <- paste0(tools::file_path_sans_ext(input_file), "_mod.fasta")
     file.copy(input_file, modified_fasta_file, overwrite = TRUE)
     preprocess_fasta(modified_fasta_file)
-
+    
     command <- paste(Z_path, params, modified_fasta_file)
     output <- system(command, intern = TRUE, ignore.stderr = FALSE)
     output
   }
-
+  
   # Observe events and process based on input
   observeEvent(input$fetch, {
     req(input$nucleotide_id)
@@ -281,37 +288,42 @@ server <- function(input, output, session) {
     updateTextInput(session, "fasta_path", value = normalizePath(original_fasta_file))
     showNotification("FASTA file fetched successfully!", type = "message")
   })
-
+  
   observeEvent(input$run, {
-      req(input$fasta_path)
-      original_fasta_file <- normalizePath(input$fasta_path)
-      params <- input$params
-      command_output <- run_zhunt(original_fasta_file, params)
-      
-      output$output <- renderText({
-          paste("Z-Hunt run complete for file:", original_fasta_file, "with parameters:", params)
-      })
-      
-      output$command_output <- renderText({
-          paste("Command output:\n", paste(command_output, collapse = "\n"))
-      })
+    req(input$fasta_path)
+    original_fasta_file <- normalizePath(input$fasta_path)
+    params <- input$params
+    command_output <- run_zhunt(original_fasta_file, params)
+    
+    output$output <- renderText({
+      paste("Z-Hunt run complete for file:",
+            original_fasta_file,
+            "with parameters:",
+            params)
+    })
+    
+    output$command_output <- renderText({
+      paste("Command output:\n",
+            paste(command_output, collapse = "\n"))
+    })
   })
   
   observeEvent(input$process, {
-      if (input$skip_steps) {
-          # Manual input
-          original_fasta_file <- input$manual_fasta_path
-          zscore_file <- input$manual_zscore_path
-          threshold <- input$manual_zscore_threshold
-      } else {
-          # From fetched data
-          original_fasta_file <- normalizePath(input$fasta_path)
-          zscore_file <- paste0(tools::file_path_sans_ext(original_fasta_file), "_mod.fasta.Z-SCORE")
-          threshold <- input$zscore_threshold
-      }
-      
-      remove_first_line(zscore_file)
-
+    if (input$skip_steps) {
+      # Manual input
+      original_fasta_file <- input$manual_fasta_path
+      zscore_file <- input$manual_zscore_path
+      threshold <- input$manual_zscore_threshold
+    } else {
+      # From fetched data
+      original_fasta_file <- normalizePath(input$fasta_path)
+      zscore_file <- paste0(tools::file_path_sans_ext(original_fasta_file),
+                            "_mod.fasta.Z-SCORE")
+      threshold <- input$zscore_threshold
+    }
+    
+    remove_first_line(zscore_file)
+    
     if (file.exists(zscore_file)) {
       showNotification("Processing Z-SCORE file...", type = "message") # Process the Z-SCORE file and prepare data
       processed_data <- fread(zscore_file,
@@ -319,25 +331,25 @@ server <- function(input, output, session) {
       processed_data$Position <- 1:nrow(processed_data)
       processed_data$max_Z_Score <- processed_data$zscore
       processed_data$OligoConformation <- processed_data$conformation
-
+      
       threshold <- as.numeric(threshold)
       processed_data <- processed_data[order(processed_data$max_Z_Score, decreasing = TRUE), ]
       end <- tail(grep(processed_data$max_Z_Score >= threshold, pattern = TRUE),
                   n = 1)
       processed_data <- processed_data[1:end, ]
       processed_data <- processed_data[order(processed_data$Position, decreasing = FALSE), ]
-
+      
       params <- as.numeric(unlist(strsplit(input$params, " ")))
       middle_value <- params[2]
       limit_value <- 2 * middle_value
-
+      
       tryCatch({
         c1 <- r_to_py(processed_data$Position)
         py$c1 <- c1
       }, error = function(e) {
         print(e)
       })
-
+      
       py_run_string(
         sprintf(
           "
@@ -361,26 +373,26 @@ c1_ol = ol
           limit_value
         )
       )
-
+      
       c1_ol <- py$c1_ol
-
+      
       c1_empty <- grep("list()", c1_ol)
       c1_list <- c1_ol[-c(c1_empty)]
-
+      
       if (length(c1_ol) == 0) {
         output$final_output <- renderText({
           "c1_ol is empty."
         })
         return()
       }
-
+      
       if (length(c1_list) == 0) {
         output$final_output <- renderText({
           "c1_list is empty."
         })
         return()
       }
-
+      
       non_Mountain_c1_list <- list()
       for (i in seq_along(c1_list)) {
         lo <- c1_list[[i]]
@@ -391,7 +403,7 @@ c1_ol = ol
       non_Mountain_c1_list <- processed_data[-which(processed_data$Position %in% non_Mountain_c1_list$non_Mountain_c1_list), ]
       non_Mountain_c1_list <- as.list(non_Mountain_c1_list$Position)
       c1_list <- c(non_Mountain_c1_list, c1_list)
-
+      
       # Use the original FASTA file for reading sequences
       processed_fasta <- read.fasta(original_fasta_file)
       dna <- toString(processed_fasta[[names(processed_fasta)]])
@@ -400,14 +412,14 @@ c1_ol = ol
       dna <- as.character(dna)
       DNA <- DNAString(dna)
       c1_fasta <- s2c(dna)
-
+      
       if (length(c1_fasta) == 0) {
         output$final_output <- renderText({
           "c1_fasta is empty."
         })
         return()
       }
-
+      
       Mc1 <- data.frame(
         "start",
         "end",
@@ -426,7 +438,7 @@ c1_ol = ol
         "GC_of_sequence",
         "max_Z_Score"
       )
-
+      
       system.time({
         for (i in seq_along(c1_list)) {
           start <- head(c1_list[[i]], n = 1)
@@ -461,47 +473,47 @@ c1_ol = ol
         }
         Masterlist_Chr1_ZScoresgreaterthan600 <- Mc1
       })
-
+      
       Masterlist_Chr1_ZScoresgreaterthan600$start <- as.numeric(Masterlist_Chr1_ZScoresgreaterthan600$start)
       Masterlist_Chr1_ZScoresgreaterthan600$end <- as.numeric(Masterlist_Chr1_ZScoresgreaterthan600$end)
       Masterlist_Chr1_ZScoresgreaterthan600$oligo_length <- as.numeric(Masterlist_Chr1_ZScoresgreaterthan600$oligo_length)
       Masterlist_Chr1_ZScoresgreaterthan600$GC_of_sequence <- as.numeric(Masterlist_Chr1_ZScoresgreaterthan600$GC_of_sequence)
       Masterlist_Chr1_ZScoresgreaterthan600$max_Z_Score <- as.numeric(Masterlist_Chr1_ZScoresgreaterthan600$max_Z_Score)
-
+      
       df <- Masterlist_Chr1_ZScoresgreaterthan600
       df$log10_ZScore <- log(df$max_Z_Score, base = 10)
-
+      
       calculate_at_content <- function(sequence) {
         at_count <- sum(str_count(sequence, "AT") + str_count(sequence, "TA"))
         total_count <- nchar(sequence) - 1
         at_content <- at_count / total_count
         return(at_content)
       }
-
+      
       calculate_gc_content <- function(sequence) {
         gc_count <- sum(str_count(sequence, "GC") + str_count(sequence, "CG"))
         total_count <- nchar(sequence) - 1
         gc_content <- gc_count / total_count
         return(gc_content)
       }
-
+      
       calculate_atgc_content <- function(sequence) {
         at_count <- sum(str_count(sequence, "A") + str_count(sequence, "T"))
         gc_count <- sum(str_count(sequence, "G") + str_count(sequence, "C"))
         atgc_content <- at_count / gc_count
         return(atgc_content)
       }
-
+      
       df <- df %>%
         mutate(
           at_content = sapply(sequence, calculate_at_content),
           gc_content = sapply(sequence, calculate_gc_content),
           atgc_content = sapply(sequence, calculate_atgc_content)
         )
-
+      
       df$at_content <- df$at_content * 100
       df$gc_content <- df$gc_content * 100
-
+      
       find_purine_pattern <- function(sequence) {
         pattern <- "(A|G)(A|G)(CG)+?(C|T)(C|T)"
         matches <- gregexpr(pattern, sequence, perl = TRUE)
@@ -520,7 +532,7 @@ c1_ol = ol
                              sequence = matching_sequences[[1]])
         return(result)
       }
-
+      
       analyze_sequences <- function(df) {
         df$ISS <- NA
         df$ISSeq <- NA
@@ -536,14 +548,14 @@ c1_ol = ol
         }
         return(df)
       }
-
+      
       # After result_df is created and populated with data
       result_df <- analyze_sequences(df)
-
+      
       # Truncate all numerical values in the dataframe to two decimal places
       result_df <- result_df %>%
         mutate_if(is.numeric, ~ round(., 2))
-
+      
       find_palindromes <- function(sequence) {
         dna <- DNAString(sequence)
         palindromes <- findPalindromes(dna)
@@ -554,27 +566,27 @@ c1_ol = ol
           return(paste(palindrome_sequences, collapse = ", "))
         }
       }
-
+      
       result_df$palindromic_sequence <- sapply(result_df$sequence, find_palindromes)
       result_df$palindromic_sequence <- as.character(result_df$palindromic_sequence)
-
+      
       output$final_output <- renderText({
         paste("Processed and finalized dataset with",
               nrow(result_df),
               "rows.")
       })
-
+      
       Zp <- (sum(result_df$oligo_length) / nchar(dna)) * 100
-
+      
       output$final_output <- renderText({
         paste("Z-Potentiality is ", Zp, "%")
       })
-
+      
       output$data_table <- renderDT({
         datatable(result_df,
                   options = list(pageLength = 10, searchHighlight = TRUE))
       })
-
+      
       output$download <- downloadHandler(
         filename = function() {
           paste0(input$download_name, ".csv")  # Use the input from the user as the filename
@@ -590,15 +602,15 @@ c1_ol = ol
       showNotification("The .fasta.Z-SCORE file was not found.", type = "error")
     }
   })
-
-
+  
+  
   # Visualization plot
   data <- reactiveVal(NULL)
-
+  
   observeEvent(input$file, {
     req(input$file)
     df <- read.csv(input$file$datapath, header = TRUE) %>%
-      mutate_all( ~ if (is.character(.))
+      mutate_all(~ if (is.character(.))
         as.factor(.)
         else
           as.numeric(.))
@@ -610,20 +622,20 @@ c1_ol = ol
                       selected = "ISS")
     data(df)
   })
-
+  
   output$table <- renderDT({
     req(data())
     datatable(data(), filter = 'top', selection = 'none')
   })
-
+  
   output$plot <- renderPlotly({
     req(data())
-
+    
     # Get the selected values
     x_var <- input$x
     y_var <- input$y
     color_var <- input$color
-
+    
     plot_ly(
       data = data(),
       x = ~ get(x_var),
@@ -656,26 +668,30 @@ c1_ol = ol
     ) %>% layout(
       dragmode = 'select',
       xaxis = list(title = x_var, range = c(min(data(
+        
       )[[x_var]]), max(data(
+        
       )[[x_var]]))),
       yaxis = list(title = y_var, range = c(min(data(
+        
       )[[y_var]]), max(data(
+        
       )[[y_var]])))
     )
   })
-
+  
   observe({
     req(data())
     if (!is.null(input$table_rows_all)) {
       filtered_data <- data()[input$table_rows_all, ]
       output$plot <- renderPlotly({
         req(filtered_data)
-
+        
         # Get the selected values
         x_var <- input$x
         y_var <- input$y
         color_var <- input$color
-
+        
         plot_ly(
           data = filtered_data,
           x = ~ get(x_var),
@@ -717,7 +733,7 @@ c1_ol = ol
       })
     }
   })
-
+  
   observe({
     req(data())
     if (!is.null(input$table_rows_all)) {
@@ -741,10 +757,10 @@ c1_ol = ol
           t <- as.data.frame(filtered_data[, 4])
           colnames(t) <- NULL
           t[, 1] <- as.data.frame(toupper(t[, 1]))
-
+          
           # Use the selected alignment method
           alignment_method <- input$alignment_method
-
+          
           aa_msa <- msa(t[, 1],
                         method = alignment_method,
                         type = "protein",
@@ -754,7 +770,7 @@ c1_ol = ol
           aa_msa$nam <- t[, 1]
           AA_msa <- as.data.frame(AA_msa[["seq"]])
           colnames(AA_msa) <- NULL
-
+          
           AA_msa <- as.data.frame(t(AA_msa))
           colnames(AA_msa) <- AA_msa[1, ]
           write.fasta(
@@ -762,14 +778,14 @@ c1_ol = ol
             names = names(AA_msa),
             file.out = "filtered_sequences.fasta"
           )
-
+          
           output$tree <- renderPlot({
             req(aa_msa)
             d <- dist.alignment(aa_msa, "identity")
             as.matrix(d)
             hemoTree <- njs(d)
             tree <- plot(hemoTree, main = "Phylogenetic Tree of Filtered Sequences")
-
+            
           })
           proteins <- ape::read.FASTA("filtered_sequences.fasta", type =
                                         "AA")
@@ -789,10 +805,10 @@ c1_ol = ol
           width = 1500
         )
       })
-
+      
     }
   })
-
+  
 }
 
 
