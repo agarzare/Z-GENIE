@@ -797,7 +797,3 @@ c1_ol = ol
 
 
 shinyApp(ui, server)
-
-###potentially more interactive, visually appealing 
-
-
