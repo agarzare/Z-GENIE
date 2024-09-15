@@ -3,12 +3,16 @@ Z-GENIE (Z-DNA GENomic Information Extractor)
 
 ####Installation Instructions
 
-#Clone the repository \n
-git clone https://github.com/agarzare/Z-GENIE.git \n
+#Clone the repository
 
-#Install the package locally \n
-devtools::install("/path/to/cloned/ZGENIE") \n
+git clone https://github.com/agarzare/Z-GENIE.git
 
-#Run Z-GENIE \n
-library(ZGENIE) \n
+#Install the package locally
+
+devtools::install("/path/to/cloned/ZGENIE")
+
+#Run Z-GENIE
+
+library(ZGENIE)
+
 runApp(system.file("shinyapp", package = "ZGENIE"))
