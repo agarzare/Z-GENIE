@@ -1,0 +1,12 @@
+
+# This file is auto-generated. Please modify it with care.
+import(shiny)
+import(shinydashboard)
+import(shinyjs)
+import(plotly)
+import(DT)
+import(dplyr)
+import(magrittr)
+import(Biostrings)
+import(msaR)
+import(seqinr)

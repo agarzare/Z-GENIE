@@ -1,0 +1,21 @@
+Package: ZGENIE
+Title: Z-GENIE (Z-DNA GENomic Information Extractor)
+Version: 0.1.0
+Authors@R: person("Angel", "Garza Reyna", email = "aig9@duke.edu", role = c("aut", "cre"))
+Description: This package contains a Shiny app for interactive bioinformatics analysis, including sequence alignment and visualization.
+Depends: R (>= 3.6)
+Imports:
+    shiny,
+    shinydashboard,
+    shinyjs,
+    plotly,
+    DT,
+    dplyr,
+    magrittr,
+    Biostrings,
+    msaR,
+    seqinr
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.2
