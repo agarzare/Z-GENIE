@@ -9,6 +9,7 @@ git clone https://github.com/agarzare/Z-GENIE.git
 
 #Install the package locally
 
+install.packages("devtools")
 devtools::install("/path/to/cloned/ZGENIE")
 
 #Run Z-GENIE
