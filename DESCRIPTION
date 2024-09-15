@@ -14,7 +14,22 @@ Imports:
     magrittr,
     Biostrings,
     msaR,
-    seqinr
+    seqinr,
+    msa,
+    ape,
+    rentrez,
+    parallel,
+    doParallel,
+    reticulate,
+    ggplot2,
+    hrbrthemes,
+    tidyr,
+    viridis,
+    data.table,
+    GenomicRanges,
+    stringr,
+    BiocParallel,
+    renv
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

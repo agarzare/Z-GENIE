@@ -6,6 +6,47 @@
 #install.packages("Rcpp", version = "1.0.6")
 # Sys.setenv(CXXFLAGS = "-std=c++11")
 # Sys.setenv(CXX11FLAGS = "-std=c++11")
+# Function to check and install missing packages
+install_if_missing <- function(packages) {
+  # Loop through each package
+  for (pkg in packages) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      if (pkg %in% rownames(installed.packages())) {
+        message(paste(pkg, "is already installed."))
+      } else {
+        message(paste("Installing", pkg))
+        # Install from Bioconductor or CRAN depending on the package
+        if (pkg %in% c("Biostrings", "msa", "GenomicRanges", "BiocParallel")) {
+          if (!requireNamespace("BiocManager", quietly = TRUE)) {
+            install.packages("BiocManager")
+          }
+          # Use specific install method for 'msa'
+          if (pkg == "msa") {
+            BiocManager::install(pkg, type = "binary")
+          } else {
+            BiocManager::install(pkg)
+          }
+        } else {
+          install.packages(pkg)
+        }
+      }
+    }
+  }
+}
+
+# List of required packages
+packages <- c(
+  "shiny", "shinydashboard", "shinyjs", "plotly", "DT", "dplyr", "magrittr", 
+  "Biostrings", "msaR", "seqinr", "msa", "ape", "rentrez", "parallel", 
+  "doParallel", "reticulate", "ggplot2", "hrbrthemes", "tidyr", "viridis", 
+  "data.table", "GenomicRanges", "stringr", "BiocParallel", "renv"
+)
+
+# Install missing packages
+install_if_missing(packages)
+
+# Load all required packages
+lapply(packages, library, character.only = TRUE)
 
 library(shiny)
 library(shinydashboard)
