@@ -16,6 +16,8 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) {
 }
 BiocManager::install("Biostrings")
 
+BiocManager::install("msa", type = "binary")
+
 devtools::install("/path/to/cloned/ZGENIE")
 
 #Run Z-GENIE
