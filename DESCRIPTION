@@ -12,10 +12,8 @@ Imports:
     DT,
     dplyr,
     magrittr,
-    Biostrings,
     msaR,
     seqinr,
-    msa,
     ape,
     rentrez,
     parallel,
@@ -26,9 +24,7 @@ Imports:
     tidyr,
     viridis,
     data.table,
-    GenomicRanges,
     stringr,
-    BiocParallel,
     renv
 License: GPL-3
 Encoding: UTF-8
