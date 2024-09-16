@@ -263,6 +263,15 @@ server <- function(input, output, session) {
     system("git clone https://github.com/Ho-Lab-Colostate/zhunt.git")
   }
   
+  # Ensure the zHunt binary has the correct execution permissions
+  zhunt_path <- system.file("shinyapp/zhunt/bin/zhunt", package = "ZGENIE")
+  
+  # Check if the file exists and update permissions
+  if (file.exists(zhunt_path)) {
+    # Update the permissions to be executable
+    Sys.chmod(zhunt_path, mode = "0755")
+  }
+  
   # Helper function to preprocess the FASTA file (remove >)
   preprocess_fasta <- function(file_path) {
     fasta_lines <- readLines(file_path)
