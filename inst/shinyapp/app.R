@@ -43,7 +43,7 @@ library(GenomicRanges)
 library(stringr)
 library(BiocParallel)
 library(renv)
-# setwd("~/Z-GENIE-Master")
+setwd("~/Z-GENIE-Master")
 # renv::init()
 # renv::snapshot()
 # renv::activate()
@@ -262,10 +262,10 @@ server <- function(input, output, session) {
   if (!file.exists("zhunt")) {
     system("git clone https://github.com/Ho-Lab-Colostate/zhunt.git")
   }
-  
+
   # Ensure the zHunt binary has the correct execution permissions
   zhunt_path <- system.file("shinyapp/zhunt/bin/zhunt", package = "ZGENIE")
-  
+
   # Check if the file exists and update permissions
   if (file.exists(zhunt_path)) {
     # Update the permissions to be executable
