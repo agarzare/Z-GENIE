@@ -43,7 +43,8 @@ library(GenomicRanges)
 library(stringr)
 library(BiocParallel)
 library(renv)
-setwd("~/Z-GENIE-Master")
+# setwd("~/Z-GENIE-main/")
+# setwd("~/Z-GENIE-Master")
 # renv::init()
 # renv::snapshot()
 # renv::activate()
@@ -258,19 +259,25 @@ server <- function(input, output, session) {
   check_command("git", "sudo apt-get install git -y")
   check_command("gcc", "sudo apt-get install gcc -y")
   
-  #Clone the Z-Hunt-III repository from GitHub if not already done
+  # Clone the Z-Hunt-III repository from GitHub if not already done
   if (!file.exists("zhunt")) {
     system("git clone https://github.com/Ho-Lab-Colostate/zhunt.git")
+    
+    # Navigate to the zhunt directory and run 'make' to compile the binary
+    setwd("zhunt")
+    system("make")
+    setwd("..")  # Return to the original directory after 'make' completes
   }
-
+  
   # Ensure the zHunt binary has the correct execution permissions
-  zhunt_path <- system.file("shinyapp/zhunt/bin/zhunt", package = "ZGENIE")
-
+  zhunt_path <- file.path(getwd(), "zhunt/bin/zhunt")
+  
   # Check if the file exists and update permissions
   if (file.exists(zhunt_path)) {
     # Update the permissions to be executable
     Sys.chmod(zhunt_path, mode = "0755")
   }
+  
   
   # Helper function to preprocess the FASTA file (remove >)
   preprocess_fasta <- function(file_path) {
