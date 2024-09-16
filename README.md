@@ -10,7 +10,10 @@ To get started, clone the repository from GitHub:
 
 ```bash
 git clone https://github.com/agarzare/Z-GENIE.git
+```
 
+Continue in R/RStudio:
+```r
 # Install devtools
 install.packages("devtools")
 
@@ -34,11 +37,4 @@ library(shiny)
 
 # Run the Shiny app
 runApp(system.file("shinyapp", package = "ZGENIE"))
-
-
-### Key Features:
-- **Headers**: Clear sections such as "Installation Instructions," "Clone the Repository," "Install the Package Locally," and "Run Z-GENIE."
-- **Code Blocks**: Used triple backticks to format shell commands (`bash`) and R code (`r`).
-- **Instruction Flow**: Organized the steps for cloning, installing dependencies, and running the app.
-
-This layout will make the README easier to follow and look professional on GitHub. Let me know if you need more customization!
+```
