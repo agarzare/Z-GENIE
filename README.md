@@ -23,5 +23,7 @@ devtools::install("/path/to/cloned/ZGENIE")
 #Run Z-GENIE
 
 library(ZGENIE)
+
 library(shiny)
+
 runApp(system.file("shinyapp", package = "ZGENIE"))
