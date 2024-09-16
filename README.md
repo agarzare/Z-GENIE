@@ -17,15 +17,6 @@ Continue in R/RStudio:
 # Install devtools
 install.packages("devtools")
 
-# Install BiocManager and required dependencies
-if (!requireNamespace("BiocManager", quietly = TRUE)) {
-  install.packages("BiocManager")
-}
-
-# Install Biostrings and msa (binary type)
-BiocManager::install("Biostrings")
-BiocManager::install("msa", type = "binary")
-
 # Install the ZGENIE package from the cloned repository
 devtools::install("/path/to/cloned/ZGENIE")
 
