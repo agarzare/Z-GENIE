@@ -1,4 +1,4 @@
-###most recent working code, AGR 090824 @ 4:54pm EST (Stand-alone Version)
+###most recent working code, AGR 092724 @ 11:55pm EST (RShiny Version -- stand alone version)
 # library(rsconnect)
 # rsconnect::deployApp("~/Z-GENIE-Master")
 # Sys.setenv(CXX11 = "g++")
@@ -8,14 +8,31 @@
 # Sys.setenv(CXX11FLAGS = "-std=c++11")
 # Function to check and install missing packages
 
+options(install.packages.check.source = "no")
+
+# Install BiocManager if it's not already installed
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager")
 }
 
-BiocManager::install(c("GenomicRanges", "BiocParallel", "Biostrings"))
-BiocManager::install("msa", type = "binary")  # Optional, if you encounter issues with `msa`
+# Function to install a package only if it's not already installed
+install_if_missing <- function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    BiocManager::install(pkg, ask = FALSE)
+  }
+}
 
-BiocManager::install("msa", type = "binary")
+# List of required packages
+packages <- c("GenomicRanges", "BiocParallel", "Biostrings", "msa")
+
+# Install the packages only if they are not already installed
+sapply(packages, install_if_missing)
+
+# Optionally install "msa" as a binary package if not present
+if (!requireNamespace("msa", quietly = TRUE)) {
+  BiocManager::install("msa", type = "binary", ask = FALSE)
+}
+
 
 
 library(shiny)
@@ -43,6 +60,8 @@ library(GenomicRanges)
 library(stringr)
 library(BiocParallel)
 library(renv)
+library(processx)
+
 # setwd("~/Z-GENIE-main/")
 # setwd("~/Z-GENIE-Master")
 # renv::init()
@@ -56,16 +75,13 @@ library(renv)
 # Now when you install a package, R will look in both CRAN and Bioconductor
 # install.packages("msa")
 
+# Updated UI
 ui <- dashboardPage(
   dashboardHeader(title = "Z-GENIE"),
   dashboardSidebar(sidebarMenu(
     menuItem("Home", tabName = "home", icon = icon("home")),
     menuItem("Run and Process", tabName = "run_process", icon = icon("cogs")),
-    menuItem(
-      "Visualization",
-      tabName = "visualization",
-      icon = icon("chart-bar")
-    ),
+    menuItem("Visualization", tabName = "visualization", icon = icon("chart-bar")),
     menuItem("MSA and Tree", tabName = "msa_tree", icon = icon("tree"))
   )),
   
@@ -74,44 +90,17 @@ ui <- dashboardPage(
     tags$head(tags$style(
       HTML(
         "
-        .content-wrapper {
-          background-color: #f4f6f9 !important;
-        }
-        .box, .main-panel {
-          border-radius: 10px;
-          padding: 20px;
-          background-color: white !important; /* Force white background for all box and panel elements */
-        }
-        .main-header .logo {
-          background-color: #0073b7 !important;
-        }
-        .main-header .navbar {
-          background-color: #3c8dbc !important;
-        }
-        .main-sidebar .sidebar {
-          background-color: #222d32 !important;
-          color: white !important;
-        }
-        .main-sidebar .sidebar a {
-          color: white !important;
-        }
-        .shiny-input-container {
-          margin-bottom: 15px;
-        }
-        .shiny-bound-output {
-          padding: 10px;
-          background-color: white !important; /* Ensuring white background for output panels */
-          border-radius: 10px;
-        }
-        .tab-pane {
-          background-color: white !important; /* Making sure tab panes have a white background */
-        }
-        .sidebar, .well {
-          background-color: white !important; /* Apply white to sidebars and wells */
-          border: none;
-          box-shadow: none;
-        }
-      "
+        .content-wrapper { background-color: #f4f6f9 !important; }
+        .box, .main-panel { border-radius: 10px; padding: 20px; background-color: white !important; }
+        .main-header .logo { background-color: #0073b7 !important; }
+        .main-header .navbar { background-color: #3c8dbc !important; }
+        .main-sidebar .sidebar { background-color: #222d32 !important; color: white !important; }
+        .main-sidebar .sidebar a { color: white !important; }
+        .shiny-input-container { margin-bottom: 15px; }
+        .shiny-bound-output { padding: 10px; background-color: white !important; border-radius: 10px; }
+        .tab-pane { background-color: white !important; }
+        .sidebar, .well { background-color: white !important; border: none; box-shadow: none; }
+        "
       )
     )),
     
@@ -124,9 +113,8 @@ ui <- dashboardPage(
           solidHeader = TRUE,
           width = 12,
           h4("Z-GENIE (Z-DNA GENomic Information Extractor)"),
-          p(
-            "This tool helps analyze Z-DNA genomic information using custom FASTA sequences or Z-Hunt output. You can either fetch sequences from NCBI or manually input data."
-          )
+          p("This tool helps analyze Z-DNA genomic information using custom FASTA sequences or Z-Hunt output. You can either fetch sequences from NCBI or manually input data."),
+          p("Adapted from: Ho, Pui S., et al. 'A computer aided thermodynamic approach for predicting the formation of Z‐DNA in naturally occurring sequences.' The EMBO journal 5.10 (1986): 2737-2744.")
         )
       )),
       
@@ -139,27 +127,41 @@ ui <- dashboardPage(
           width = 12,
           collapsible = TRUE,
           
-          checkboxInput("skip_steps", "Skip Fetch and Run Z-Hunt", value = FALSE),
+          radioButtons("input_source", "Select Input Method:",
+                       choices = list("Fetch FASTA from NCBI" = "fetch",
+                                      "Upload FASTA File" = "upload",
+                                      "Skip Fetch and Run Z-Hunt" = "manual"),
+                       selected = "fetch"),
           
+          # Conditional Panel for fetching FASTA
           conditionalPanel(
-            condition = "input.skip_steps == false",
-            textInput("nucleotide_id", "Enter Nucleotide ID (e.g., U81553.1)", value = ""),
+            condition = "input.input_source == 'fetch'",
+            textInput("nucleotide_id", "Enter Nucleotide ID (e.g., \"U81553.1\")", value = ""),
             actionButton("fetch", "Fetch and Save FASTA"),
+            downloadButton('download_fasta', 'Download Original FASTA'),
             textInput("fasta_path", "Enter Path to FASTA File", value = "Path/to/file/yourfile.fasta"),
-            textInput("params", "Z-Hunt Parameters", value = "8 6 8"),
+            textInput("params", "Z-Hunt Parameters", value = "8, 6, 8"),
             actionButton("run", "Run Z-Hunt"),
+            downloadButton('download_zscore', 'Download Z-SCORE Output'),
             numericInput("zscore_threshold", "Manual Z-Score Threshold", value = 600)
           ),
           
+          # Conditional Panel for manually inputting paths
           conditionalPanel(
-            condition = "input.skip_steps == true",
-            textInput(
-              "manual_fasta_path",
-              "Enter Path to Original FASTA File (with >)",
-              value = "Path/to/original.fasta"
-            ),
-            textInput("manual_zscore_path", "Enter Path to Z-SCORE File", value = "Path/to/zscore.Z-SCORE"),
+            condition = "input.input_source == 'manual'",
+            fileInput("manual_fasta_path", "Upload Original FASTA File (with >)", accept = c(".fasta"), placeholder = "No file selected"),
+            fileInput("manual_zscore_path", "Upload Z-SCORE File", accept = c(".Z-SCORE"), placeholder = "No file selected"),
             numericInput("manual_zscore_threshold", "Manual Z-Score Threshold", value = 600)
+          ),
+          
+          # Conditional Panel for uploading a FASTA file and running Z-Hunt
+          conditionalPanel(
+            condition = "input.input_source == 'upload'",
+            fileInput("upload_fasta", "Upload FASTA File", accept = c(".fasta")),
+            textInput("params", "Z-Hunt Parameters", value = "8, 6, 8"),
+            actionButton("run", "Run Z-Hunt"),
+            downloadButton('download_zscore', 'Download Z-SCORE Output'),
+            numericInput("zscore_threshold", "Manual Z-Score Threshold", value = 600)
           ),
           
           actionButton("process", "Process Z-SCORE File"),
@@ -198,87 +200,25 @@ ui <- dashboardPage(
           )
         )
       )),
-      # Modified MSA and Tree Tab (MSA on top, Tree at the bottom)
-      tabItem(tabName = "msa_tree", fluidRow(column(
-        width = 12,
-        # Full width
-        box(
-          title = "Multiple Sequence Alignment",
-          status = "info",
-          solidHeader = TRUE,
-          width = 12,
-          selectInput(
-            "alignment_method",
-            "Alignment Method",
-            choices = c("ClustalW", "ClustalOmega", "Muscle"),
-            selected = "ClustalW"
-          ),
-          msaROutput("msa", width = "100%", height = "auto")  # Set appropriate height for the MSA output
-        )
-      )), fluidRow(column(
-        width = 12,
-        # Full width
-        box(
-          title = "Phylogenetic Tree",
-          status = "info",
-          solidHeader = TRUE,
-          width = 12,
-          plotOutput("tree", height = "1500px")  # Set appropriate height for the tree plot
-        )
-      )))
       
-    )
+      # MSA and Tree Tab
+      tabItem(tabName = "msa_tree", fluidRow(
+        column(width = 12,
+               box(title = "Multiple Sequence Alignment", status = "info", solidHeader = TRUE, width = 12,
+                   selectInput("alignment_method", "Alignment Method", choices = c("ClustalW", "ClustalOmega", "Muscle"), selected = "ClustalW"),
+                   msaROutput("msa", width = "100%", height = "auto"))
+        )),
+        fluidRow(column(width = 12,
+                        box(title = "Phylogenetic Tree", status = "info", solidHeader = TRUE, width = 12,
+                            plotOutput("tree", height = "1500px")))
+        )
+      ))
   )
 )
 
 
-
-
-
-
 # Server
 server <- function(input, output, session) {
-  # Function to check if a command is available and install if missing
-  check_command <- function(command, install_command = NULL) {
-    if (Sys.which(command) == "") {
-      if (!is.null(install_command)) {
-        showNotification(paste(command, "is not installed. Installing..."),
-                         type = "warning")
-        system(install_command)
-      }
-      if (Sys.which(command) == "") {
-        stop(paste(
-          command,
-          "could not be installed. Please install it manually."
-        ))
-      }
-    }
-  }
-  
-  # Check for 'git' and 'gcc' availability, install if missing
-  check_command("git", "sudo apt-get install git -y")
-  check_command("gcc", "sudo apt-get install gcc -y")
-  
-  # Clone the Z-Hunt-III repository from GitHub if not already done
-  if (!file.exists("zhunt")) {
-    system("git clone https://github.com/Ho-Lab-Colostate/zhunt.git")
-    
-    # Navigate to the zhunt directory and run 'make' to compile the binary
-    setwd("zhunt")
-    system("make")
-    setwd("..")  # Return to the original directory after 'make' completes
-  }
-  
-  # Ensure the zHunt binary has the correct execution permissions
-  zhunt_path <- file.path(getwd(), "zhunt/bin/zhunt")
-  
-  # Check if the file exists and update permissions
-  if (file.exists(zhunt_path)) {
-    # Update the permissions to be executable
-    Sys.chmod(zhunt_path, mode = "0755")
-  }
-  
-  
   # Helper function to preprocess the FASTA file (remove >)
   preprocess_fasta <- function(file_path) {
     fasta_lines <- readLines(file_path)
@@ -288,10 +228,14 @@ server <- function(input, output, session) {
     }
   }
   
+  
+  
+  
+  
   # Fetch FASTA from NCBI
   fetch_and_save_fasta <- function(nucleotide_id) {
     fasta <- rentrez::entrez_fetch(db = "nucleotide",
-                                   id = nucleotide_id,
+                                   id = eval(expression(text = nucleotide_id)),
                                    rettype = "fasta")
     file_name <- paste0(nucleotide_id, ".fasta")
     write(fasta, file = file_name)
@@ -307,82 +251,214 @@ server <- function(input, output, session) {
     writeLines(lines, file_path)
   }
   
-  # Run Z-Hunt
+  # Function to run Z-Hunt
   run_zhunt <- function(input_file, params) {
-    zhunt_path <- normalizePath("zhunt")
-    Z_path <- file.path(zhunt_path, "bin", "zhunt")
+    # Define the path to the zHunt binary
+    Z_path <- normalizePath(file.path(getwd(), "zhunt/bin/zhunt"), mustWork = FALSE)
     
+    # Check if the zHunt binary exists at the specified path
+    if (!file.exists(Z_path)) {
+      stop(paste("Error: The zHunt binary was not found at path:", Z_path))
+    }
+    
+    # Ensure the zHunt binary has executable permissions
+    system(paste("chmod +x", Z_path), ignore.stderr = TRUE)
+    
+    # Check if the zHunt binary is executable
+    if (file.access(Z_path, mode = 1) != 0) {
+      stop(paste("Error: The zHunt binary is not executable. Check the file permissions (chmod +x) and try again. Path:", Z_path))
+    }
+    
+    # Prepare the modified FASTA file
     modified_fasta_file <- paste0(tools::file_path_sans_ext(input_file), "_mod.fasta")
     file.copy(input_file, modified_fasta_file, overwrite = TRUE)
     preprocess_fasta(modified_fasta_file)
     
-    command <- paste(Z_path, params, modified_fasta_file)
-    output <- system(command, intern = TRUE, ignore.stderr = FALSE)
-    output
+    # Construct the command with the path to Z-Hunt and parameters
+    command <- paste(Z_path, paste(params, collapse = " "), modified_fasta_file)
+    
+    # Debugging output: Print the constructed command to ensure it's correct
+    cat("Executing command:", command, "\n")
+    
+    # Execute the Z-Hunt binary using processx::run instead of system for better error handling
+    tryCatch({
+      result <- processx::run(
+        command = Z_path,
+        args = c(params, modified_fasta_file),
+        error_on_status = FALSE,
+        echo_cmd = TRUE,
+        echo = TRUE
+      )
+      
+      # Check if there's an error in stderr output
+      if (result$stderr != "") {
+        return(paste("Error occurred during Z-Hunt execution:\n", result$stderr))
+      }
+      
+      # If successful, return the result from stdout
+      return(result$stdout)
+      
+    }, error = function(e) {
+      return(paste("Error running Z-Hunt:", e$message))
+    })
   }
   
-  # Observe events and process based on input
+  # Fetch and Save FASTA File
   observeEvent(input$fetch, {
     req(input$nucleotide_id)
     showNotification("Fetching FASTA file...", type = "message")
     original_fasta_file <- fetch_and_save_fasta(input$nucleotide_id)
     updateTextInput(session, "fasta_path", value = normalizePath(original_fasta_file))
     showNotification("FASTA file fetched successfully!", type = "message")
+    
+    # Save the path of the fetched FASTA file for download
+    output$download_fasta <- downloadHandler(
+      filename = function() {
+        "fasta.fasta"
+      },
+      content = function(file) {
+        file.copy(original_fasta_file, file)
+      },
+      contentType = "text/plain"
+    )
   })
   
+  
+  
+  # Run Z-Hunt
   observeEvent(input$run, {
-    req(input$fasta_path)
-    original_fasta_file <- normalizePath(input$fasta_path)
-    params <- input$params
-    command_output <- run_zhunt(original_fasta_file, params)
-    
-    output$output <- renderText({
-      paste("Z-Hunt run complete for file:",
-            original_fasta_file,
-            "with parameters:",
-            params)
-    })
-    
-    output$command_output <- renderText({
-      paste("Command output:\n",
-            paste(command_output, collapse = "\n"))
-    })
-  })
-  
-  observeEvent(input$process, {
-    if (input$skip_steps) {
-      # Manual input
-      original_fasta_file <- input$manual_fasta_path
-      zscore_file <- input$manual_zscore_path
-      threshold <- input$manual_zscore_threshold
-    } else {
-      # From fetched data
+    # Check the selected input source
+    if (input$input_source == "upload") {
+      req(input$upload_fasta)
+      original_fasta_file <- input$upload_fasta$datapath
+    } else if (input$input_source == "fetch") {
+      req(input$fasta_path)
       original_fasta_file <- normalizePath(input$fasta_path)
-      zscore_file <- paste0(tools::file_path_sans_ext(original_fasta_file),
-                            "_mod.fasta.Z-SCORE")
-      threshold <- input$zscore_threshold
+    } else {
+      # For manual input, we do not run Z-Hunt
+      output$output <- renderText({
+        "Z-Hunt run is not applicable for 'manual' input method."
+      })
+      return()
     }
     
-    remove_first_line(zscore_file)
+    # Split the input string into a vector and validate parameters
+    params <- as.numeric(unlist(strsplit(input$params, ",")))
     
+    # Check if params has exactly 3 elements
+    if (length(params) != 3) {
+      output$output <- renderText({
+        "Error: Please ensure 'params' contains exactly three numbers separated by commas (e.g., '16, 6, 16')"
+      })
+      return()
+    }
+    
+    # Run the Z-Hunt command using the updated run_zhunt function
+    command_output <- tryCatch({
+      run_zhunt(original_fasta_file, params)
+    }, error = function(e) {
+      paste("Error running Z-Hunt:", e$message)
+    })
+    
+    # Render the output in the Shiny UI
+    output$output <- renderText({
+      paste("Z-Hunt run complete for file:", original_fasta_file,
+            "\nParameters used:", paste(params, collapse = " "),
+            "\n\nOutput:\n", paste(command_output, collapse = "\n"))
+    })
+    
+    # Save the Z-SCORE output to a temporary file
+    output_file_path <- paste0(tools::file_path_sans_ext(original_fasta_file), "_mod.fasta.Z-SCORE")
+    
+    
+    # Add the downloadHandler for the output
+    output$download_zscore <- downloadHandler(
+      filename = function() {
+        paste0("fasta.Z.SCORE")
+      },
+      content = function(file) {
+        file.copy(output_file_path, file)
+      },
+      contentType = "text/plain"
+    )
+  })
+  
+  
+  
+  # Process Z-SCORE File
+  observeEvent(input$process, {
+    req(input$input_source)  # Ensure input source is selected
+    
+    # Handling different input sources
+    if (input$input_source == "manual") {
+      req(input$manual_fasta_path, input$manual_zscore_path)
+      original_fasta_file <- input$manual_fasta_path$datapath
+      zscore_file <- input$manual_zscore_path$datapath
+      threshold <- input$manual_zscore_threshold
+      
+      # Remove the first line from the Z-SCORE file if necessary
+      remove_first_line(zscore_file)
+      
+    } else if (input$input_source == "upload") {
+      req(input$upload_fasta)  # Ensure the FASTA file is uploaded
+      original_fasta_file <- input$upload_fasta$datapath
+      zscore_file <- paste0(tools::file_path_sans_ext(original_fasta_file), "_mod.fasta.Z-SCORE")
+      threshold <- input$zscore_threshold
+      
+      # Remove the first line from the Z-SCORE file if necessary
+      remove_first_line(zscore_file)
+      
+    } else if (input$input_source == "fetch") {
+      req(input$fasta_path)
+      original_fasta_file <- normalizePath(input$fasta_path)
+      zscore_file <- paste0(tools::file_path_sans_ext(original_fasta_file), "_mod.fasta.Z-SCORE")
+      threshold <- input$zscore_threshold
+      
+      # Remove the first line from the Z-SCORE file if necessary
+      remove_first_line(zscore_file)
+    }
+    
+    # Check if the Z-SCORE file exists
     if (file.exists(zscore_file)) {
-      showNotification("Processing Z-SCORE file...", type = "message") # Process the Z-SCORE file and prepare data
-      processed_data <- fread(zscore_file,
-                              col.names = c("V1", "V2", "zscore", "conformation"))
+      showNotification("Processing Z-SCORE file...", type = "message")
+      
+      
+      # Continue with the processing steps
+      processed_data <- fread(zscore_file, col.names = c("V1", "V2", "zscore", "conformation"))
       processed_data$Position <- 1:nrow(processed_data)
       processed_data$max_Z_Score <- processed_data$zscore
       processed_data$OligoConformation <- processed_data$conformation
       
       threshold <- as.numeric(threshold)
       processed_data <- processed_data[order(processed_data$max_Z_Score, decreasing = TRUE), ]
-      end <- tail(grep(processed_data$max_Z_Score >= threshold, pattern = TRUE),
-                  n = 1)
+      
+      # Ensure to use `which` instead of `grep` to find rows that match the threshold criteria
+      end <- tail(which(processed_data$max_Z_Score >= threshold), n = 1)
+      
+      if (length(end) == 0) {
+        showNotification("No scores meet the threshold criteria.", type = "error")
+        return()
+      }
+      
       processed_data <- processed_data[1:end, ]
       processed_data <- processed_data[order(processed_data$Position, decreasing = FALSE), ]
       
-      params <- as.numeric(unlist(strsplit(input$params, " ")))
-      middle_value <- params[2]
-      limit_value <- 2 * middle_value
+      
+      # params <- as.numeric(unlist(strsplit(input$params, " ")))
+      # middle_value <- params[2]
+      # limit_value <- 2 * middle_value
+      # Correct the params handling
+      params <- as.numeric(trimws(unlist(strsplit(input$params, ","))))
+      
+      # Now params should be a numeric vector: c(16, 6, 16)
+      # Extract middle_value and calculate limit_value
+      if (length(params) == 3) {
+        middle_value <- params[2]
+        limit_value <- 2 * middle_value
+      } else {
+        stop("Error: 'params' should contain exactly three numbers separated by commas (e.g., '16, 6, 16')")
+      }
+      
       
       tryCatch({
         c1 <- r_to_py(processed_data$Position)
@@ -592,8 +668,62 @@ c1_ol = ol
         return(df)
       }
       
+      ###include p53 motif
+      # Function to find 5′-RRRCWWGYYY-3′ motif in a sequence
+      find_motif_pattern <- function(sequence) {
+        # Define the pattern for RRRCWWGYYY (R = A|G, W = A|T, Y = C|T)
+        pattern <- "(A|G)(A|G)(A|G)(C)(A|T)(A|T)(G)(C|T)(C|T)(C|T)"
+        
+        # Find matches of the updated pattern in the DNA sequence
+        matches <- gregexpr(pattern, sequence, perl = TRUE)
+        
+        # Handle cases where no matches are found
+        if (length(matches[[1]]) == 1 && matches[[1]][1] == -1) {
+          return(data.frame(
+            start = integer(0),
+            end = integer(0),
+            sequence = character(0)
+          ))
+        }
+        
+        # Extract matching sequences
+        matching_sequences <- regmatches(sequence, matches)
+        start_positions <- matches[[1]]
+        end_positions <- start_positions + attr(matches[[1]], "match.length") - 1
+        
+        # Create a data frame to hold the results
+        result <- data.frame(start = start_positions,
+                             end = end_positions,
+                             sequence = matching_sequences[[1]])
+        return(result)
+      }
+      
+      # Function to analyze a dataframe of sequences for the motif pattern
+      analyze_sequences2 <- function(df) {
+        df$p53motif <- NA  # Column to store TRUE/FALSE if the motif is found
+        df$p53motifeq <- NA  # Column to store the matching sequences
+        
+        # Loop through each sequence in the dataframe
+        for (i in 1:nrow(df)) {
+          sequence <- df$sequence[i]
+          match_result <- find_motif_pattern(sequence)
+          
+          # Check if any matches were found
+          if (nrow(match_result) > 0) {
+            df$p53motif[i] <- "TRUE"
+            df$p53motifeq[i] <- paste(match_result$sequence, collapse = ",")
+          } else {
+            df$p53motif[i] <- "FALSE"
+          }
+        }
+        
+        return(df)
+      }
+      
+      
       # After result_df is created and populated with data
       result_df <- analyze_sequences(df)
+      result_df <- analyze_sequences2(result_df)
       
       # Truncate all numerical values in the dataframe to two decimal places
       result_df <- result_df %>%
@@ -650,22 +780,22 @@ c1_ol = ol
   # Visualization plot
   data <- reactiveVal(NULL)
   
-  # observeEvent(input$file, {
-  #   req(input$file)
-  #   df <- read.csv(input$file$datapath, header = TRUE) %>%
-  #     mutate_all(~ if (is.character(.))
-  #       as.factor(.)
-  #       else
-  #         as.numeric(.))
-  #   updateSelectInput(session, "x", choices = names(df), selected = "start")
-  #   updateSelectInput(session, "y", choices = names(df), selected = "log10_ZScore")
-  #   updateSelectInput(session,
-  #                     "color",
-  #                     choices = names(df),
-  #                     selected = "ISS")
-  #   data(df)
-  # })
-
+  observeEvent(input$file, {
+    req(input$file)
+    df <- read.csv(input$file$datapath, header = TRUE) %>%
+      mutate_all(~ if (is.character(.))
+        as.factor(.)
+        else
+          as.numeric(.))
+    updateSelectInput(session, "x", choices = names(df), selected = "start")
+    updateSelectInput(session, "y", choices = names(df), selected = "log10_ZScore")
+    updateSelectInput(session,
+                      "color",
+                      choices = names(df),
+                      selected = "ISS")
+    data(df)
+  })
+  
   observeEvent(input$file, {
     req(input$file)
     
