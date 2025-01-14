@@ -160,7 +160,7 @@ ui <- dashboardPage(
             fileInput("upload_fasta", "Upload FASTA File", accept = c(".fasta")),
             textInput("params", "Z-Hunt Parameters", value = "8, 6, 8"),
             actionButton("run", "Run Z-Hunt"),
-            downloadButton('download_zscore', 'Download Z-SCORE Output'),
+            downloadButton('download_zscore_2', 'Download Z-SCORE Output'),
             numericInput("zscore_threshold", "Manual Z-Score Threshold", value = 600)
           ),
           
@@ -217,6 +217,7 @@ ui <- dashboardPage(
 )
 
 
+# DEBUG : test to make sure the first lines actually the one being read
 # Server
 server <- function(input, output, session) {
   # Helper function to preprocess the FASTA file (remove >)
@@ -301,6 +302,7 @@ server <- function(input, output, session) {
     }, error = function(e) {
       return(paste("Error running Z-Hunt:", e$message))
     })
+  
   }
   
   # Fetch and Save FASTA File
@@ -312,6 +314,7 @@ server <- function(input, output, session) {
     showNotification("FASTA file fetched successfully!", type = "message")
     
     # Save the path of the fetched FASTA file for download
+
     output$download_fasta <- downloadHandler(
       filename = function() {
         "fasta.fasta"
@@ -331,9 +334,33 @@ server <- function(input, output, session) {
     if (input$input_source == "upload") {
       req(input$upload_fasta)
       original_fasta_file <- input$upload_fasta$datapath
+      # download handler for z-score output from upload
+      # download handlers must be unique
+      output$download_zscore_2 <- downloadHandler(
+        filename = function() {
+          "fasta.Z.SCORE"
+        },
+        content = function(file) {
+          file.copy(output_file_path, file)
+        },
+        contentType = "text/plain"
+      )
+      
     } else if (input$input_source == "fetch") {
       req(input$fasta_path)
       original_fasta_file <- normalizePath(input$fasta_path)
+      # download handler for z-score output from fetch
+      # download handlers must be unique
+      output$download_zscore <- downloadHandler(
+        filename = function() {
+          "fasta.Z.SCORE"
+        },
+        content = function(file) {
+          file.copy(output_file_path, file)
+        },
+        contentType = "text/plain"
+      )
+      # original_fasta_file <- input$fasta_path
     } else {
       # For manual input, we do not run Z-Hunt
       output$output <- renderText({
@@ -346,6 +373,7 @@ server <- function(input, output, session) {
     params <- as.numeric(unlist(strsplit(input$params, ",")))
     
     # Check if params has exactly 3 elements
+    # DEBUG : Add info on what the 3 parameters are
     if (length(params) != 3) {
       output$output <- renderText({
         "Error: Please ensure 'params' contains exactly three numbers separated by commas (e.g., '16, 6, 16')"
@@ -368,20 +396,13 @@ server <- function(input, output, session) {
     })
     
     # Save the Z-SCORE output to a temporary file
+    # automatically saves locally, can specify download folder
     output_file_path <- paste0(tools::file_path_sans_ext(original_fasta_file), "_mod.fasta.Z-SCORE")
+
     
     
-    # Add the downloadHandler for the output
-    output$download_zscore <- downloadHandler(
-      filename = function() {
-        paste0("fasta.Z.SCORE")
-      },
-      content = function(file) {
-        file.copy(output_file_path, file)
-      },
-      contentType = "text/plain"
-    )
   })
+  
   
   
   
