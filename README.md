@@ -6,13 +6,23 @@ Z-GENIE is a Shiny application designed for interactive bioinformatics analysis,
 
 ### Clone the Repository
 
-To get started, clone the repository from GitHub:
+Ways to clone:
 
+1. HTTPS 
+Input the following into terminal or command line:
 ```bash
 git clone https://github.com/agarzare/Z-GENIE.git
 ```
+You will be prompted to log in to your personal account.
 
-Continue in R/RStudio:
+2. SSH 
+*You will need to have a public SSH key connected to your account
+Input the following into terminal or command line:
+```bash
+git clone git@github.com:agarzare/Z-GENIE.git
+```
+
+Continue in R/RStudio from the terminal:
 ```r
 # Install devtools
 install.packages("devtools")
