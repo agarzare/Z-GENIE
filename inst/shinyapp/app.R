@@ -73,7 +73,8 @@ ui <- dashboardPage(
       menuItem("Home", tabName="home", icon=icon("home")),
       menuItem("Run and Process", tabName="run_process", icon=icon("cogs")),
       menuItem("Visualization", tabName="visualization", icon=icon("chart-bar")),
-      menuItem("MSA and Tree", tabName="msa_tree", icon=icon("tree"))
+      menuItem("MSA and Tree", tabName="msa_tree", icon=icon("tree")),
+      menuItem("Contact", tabName="contact", icon=icon("address-book"))
     )
   ),
   
@@ -228,6 +229,18 @@ ui <- dashboardPage(
                 column(width=12,
                        box(title="Phylogenetic Tree",status="info",solidHeader=TRUE,width=12,
                            plotOutput("tree",height="1500px"))
+                )
+              )
+      ),
+      
+      # Contact
+      tabItem(tabName="contact",
+              fluidRow(
+                box(
+                  title="Contact Information of Creators", status="info", solidHeader=TRUE, width=12,
+                  h4("Please use the information provided below:"),
+                  p("For collaboration, science related questions, and everything else: agr9@duke.edu"),
+                  p("For technology related issues: melanyfuentes@alumni.duke.edu")
                 )
               )
       )
