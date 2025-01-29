@@ -375,7 +375,8 @@ server <- function(input, output, session){
       showNotification("FASTA file fetched successfully!",type="message")
       
       output$download_fasta <- downloadHandler(
-        filename=function(){ "fasta.fasta" },
+        # will download as unique ID
+        filename=function(){ paste(gsub('\\.', '-', input$nucleotide_id), ".fasta") },
         content=function(file){ file.copy(original_fasta_file, file) },
         contentType="text/plain"
       )
@@ -949,8 +950,7 @@ server <- function(input, output, session){
     req(input$file)
     df <- read.csv(input$file$datapath, header=TRUE) %>%
       mutate_all(~ if(is.character(.)) as.factor(.) else as.numeric(.))
-  # mutate_all(~ ifelse(is.character(.), as.factor(.),  as.numeric(.)))
-                 
+    # mutate_all(~ ifelse(is.character(.), as.factor(.),  as.numeric(.)))
     updateSelectInput(session,"x",choices=names(df),selected="start")
     updateSelectInput(session,"y",choices=names(df),selected="log10_ZScore")
     updateSelectInput(session,"color",choices=names(df),selected="ISS")
