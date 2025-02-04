@@ -239,7 +239,7 @@ ui <- dashboardPage(
                 box(
                   title="Contact Information of Creators", status="info", solidHeader=TRUE, width=12,
                   h4("Please use the information provided below:"),
-                  p("For collaboration, science related questions, and everything else: agr9@duke.edu"),
+                  p("For collaboration, science related questions, and everything else: aig9@duke.edu"),
                   p("For technology related issues: melanyfuentes@alumni.duke.edu")
                 )
               )
