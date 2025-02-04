@@ -569,23 +569,60 @@ server <- function(input, output, session){
       }
       
       incProgress(0.6, detail="Grouping consecutive positions in R")
-      positions <- processed_data$Position
-      if (length(positions)<1){
-        showNotification("No positions after threshold filter.", type="warning")
-        return()
-      }
+
+      # Make sure we have the data in ascending position:
+      merged_list <- list()
+      merged_index <- 1
       
-      groups <- list()
-      temp <- c(positions[1])
-      for (i in seq(2,length(positions))){
-        if (abs(positions[i] - positions[i-1]) < limit_value){
-          temp <- c(temp, positions[i])
+      # Initialize with first row
+      cStart <- processed_data$Position[1]
+      cLen   <- nchar(processed_data$OligoConformation[1])
+      cEnd   <- cStart + cLen - 1
+      cMaxZ  <- processed_data$max_Z_Score[1]
+      cPositions <- c(1)  # row indices that belong to current region
+      
+      for(i in 2:nrow(processed_data)){
+        p     <- processed_data$Position[i]
+        pLen  <- nchar(processed_data$OligoConformation[i])
+        pEnd  <- p + pLen - 1
+        pZ    <- processed_data$max_Z_Score[i]
+        
+        # Check if we should merge with current region
+        # Condition: if new start p is within cEnd + limit_value => merge
+        # If you want strictly overlapping intervals, you could do "if (p <= cEnd)"
+        # or "if (p <= cEnd + 1)" for immediate adjacency.
+        # Below uses the limit_value logic:
+        
+        if( p <= (cEnd + limit_value) ){
+          # Merge
+          cEnd  <- max(cEnd, pEnd)
+          cMaxZ <- max(cMaxZ, pZ)
+          cPositions <- c(cPositions, i)
         } else {
-          groups[[length(groups)+1]] <- temp
-          temp <- c(positions[i])
+          # Finalize old region
+          merged_list[[merged_index]] <- list(
+            start = cStart,
+            end   = cEnd,
+            maxZ  = cMaxZ,
+            row_indices = cPositions
+          )
+          merged_index <- merged_index + 1
+          
+          # Start a new region
+          cStart <- p
+          cEnd   <- pEnd
+          cMaxZ  <- pZ
+          cPositions <- c(i)
         }
       }
-      groups[[length(groups)+1]] <- temp
+      
+      # Final push of the last region
+      merged_list[[merged_index]] <- list(
+        start = cStart,
+        end   = cEnd,
+        maxZ  = cMaxZ,
+        row_indices = cPositions
+      )
       
       incProgress(0.7, detail="Building final data frame")
       processed_fasta <- read.fasta(original_fasta_file)
@@ -871,44 +908,42 @@ server <- function(input, output, session){
       }
       
       incProgress(0.6, detail="Performing pure R grouping for BED")
-      positions <- bed_data$Position
-      if (length(positions)<1){
-        showNotification("No positions found after threshold filter for BED.", type="warning")
-        return()
-      }
-      groups <- list()
-      temp <- c(positions[1])
-      for (i in seq(2,length(positions))){
-        if (abs(positions[i]-positions[i-1])<limit_value){
-          temp <- c(temp, positions[i])
-        } else {
-          groups[[length(groups)+1]] <- temp
-          temp <- c(positions[i])
-        }
-      }
-      groups[[length(groups)+1]] <- temp
+      merged_bed <- list()
+      merged_index <- 1
       
-      incProgress(0.8, detail="Building minimal BED DataFrame")
-      minimal_bed_df <- data.frame(start=numeric(0), end=numeric(0), max_Z_Score=numeric(0))
-      idx <- 1
-      for (grp in groups){
-        start_pos <- head(grp,1)
-        last_pos  <- tail(grp,1)
+      # Initialize region
+      cStart <- bed_data$Position[1]
+      cLen   <- nchar(bed_data$OligoConformation[1])
+      cEnd   <- cStart + cLen - 1
+      cMaxZ  <- bed_data$max_Z_Score[1]
+      
+      for(i in 2:nrow(bed_data)){
+        p     <- bed_data$Position[i]
+        pLen  <- nchar(bed_data$OligoConformation[i])
+        pEnd  <- p + pLen - 1
+        pZ    <- bed_data$max_Z_Score[i]
         
-        row_idx <- which(bed_data$Position==last_pos)
-        if (length(row_idx)<1){
-          showNotification(paste("No row found for last_pos=",last_pos,". Skipping group."), type="warning")
-          next
+        # Decide if we merge or finalize
+        if(p <= (cEnd + limit_value)){
+          # Merge
+          cEnd  <- max(cEnd, pEnd)
+          cMaxZ <- max(cMaxZ, pZ)
+        } else {
+          # Finalize old
+          merged_bed[[merged_index]] <- list(start=cStart, end=cEnd, maxZ=cMaxZ)
+          merged_index <- merged_index + 1
+          
+          # Start new
+          cStart <- p
+          cEnd   <- pEnd
+          cMaxZ  <- pZ
         }
-        length_oligo <- nchar(bed_data$OligoConformation[row_idx])
-        end_pos <- last_pos + length_oligo -1
-        
-        grp_rows <- which(bed_data$Position %in% grp)
-        local_max_zscore <- max(bed_data$max_Z_Score[grp_rows])
-        
-        minimal_bed_df[idx, ] <- c(start_pos, end_pos, local_max_zscore)
-        idx <- idx+1
       }
+      
+      # finalize the last region
+      merged_bed[[merged_index]] <- list(start=cStart, end=cEnd, maxZ=cMaxZ)
+      
+      incProgress(0.8, detail="Constructing minimal BED DataFrame")
       
       chrom_name <- if (!is.null(input$nucleotide_id) && nzchar(input$nucleotide_id)){
         input$nucleotide_id
@@ -917,11 +952,25 @@ server <- function(input, output, session){
       }
       
       bed_final <- data.frame(
-        chrom=chrom_name,
-        start=minimal_bed_df$start,
-        end=minimal_bed_df$end,
-        score=minimal_bed_df$max_Z_Score
+        chrom = character(0),
+        start = numeric(0),
+        end   = numeric(0),
+        score = numeric(0)
       )
+      
+      for(i in seq_along(merged_bed)){
+        region_info <- merged_bed[[i]]
+        bed_final[i, ] <- c(
+          chrom_name,
+          region_info$start,
+          region_info$end,
+          region_info$maxZ
+        )
+      }
+      
+      bed_final$start <- as.numeric(bed_final$start)
+      bed_final$end   <- as.numeric(bed_final$end)
+      bed_final$score <- as.numeric(bed_final$score)
       
       bed_data_reactive(bed_final)
       
