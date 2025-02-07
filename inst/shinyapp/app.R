@@ -570,6 +570,7 @@ server <- function(input, output, session) {
         stop("Error: 'params' should have exactly three numbers.")
       }
       
+<<<<<<< HEAD
       incProgress(0.6, detail = "Grouping consecutive positions - updated logic using IRanges")
       
       # NEW interval merging approach using IRanges for efficiency
@@ -591,6 +592,63 @@ server <- function(input, output, session) {
       } else {
         merged_list <- list()
       }
+=======
+      incProgress(0.6, detail="Grouping consecutive positions in R")
+
+      # Make sure we have the data in ascending position:
+      merged_list <- list()
+      merged_index <- 1
+      
+      # Initialize with first row
+      cStart <- processed_data$Position[1]
+      cLen   <- nchar(processed_data$OligoConformation[1])
+      cEnd   <- cStart + cLen - 1
+      cMaxZ  <- processed_data$max_Z_Score[1]
+      cPositions <- c(1)  # row indices that belong to current region
+      
+      for(i in 2:nrow(processed_data)){
+        p     <- processed_data$Position[i]
+        pLen  <- nchar(processed_data$OligoConformation[i])
+        pEnd  <- p + pLen - 1
+        pZ    <- processed_data$max_Z_Score[i]
+        
+        # Check if we should merge with current region
+        # Condition: if new start p is within cEnd + limit_value => merge
+        # If you want strictly overlapping intervals, you could do "if (p <= cEnd)"
+        # or "if (p <= cEnd + 1)" for immediate adjacency.
+        # Below uses the limit_value logic:
+        
+        if( p <= (cEnd + limit_value) ){
+          # Merge
+          cEnd  <- max(cEnd, pEnd)
+          cMaxZ <- max(cMaxZ, pZ)
+          cPositions <- c(cPositions, i)
+        } else {
+          # Finalize old region
+          merged_list[[merged_index]] <- list(
+            start = cStart,
+            end   = cEnd,
+            maxZ  = cMaxZ,
+            row_indices = cPositions
+          )
+          merged_index <- merged_index + 1
+          
+          # Start a new region
+          cStart <- p
+          cEnd   <- pEnd
+          cMaxZ  <- pZ
+          cPositions <- c(i)
+        }
+      }
+      
+      # Final push of the last region
+      merged_list[[merged_index]] <- list(
+        start = cStart,
+        end   = cEnd,
+        maxZ  = cMaxZ,
+        row_indices = cPositions
+      )
+>>>>>>> 72619d254327dfdd3e635883db1c0acf07c63d26
       
       # OLD interval merging loop (commented out):
       # positions <- processed_data$Position
@@ -897,6 +955,7 @@ server <- function(input, output, session) {
         return()
       }
       
+<<<<<<< HEAD
       incProgress(0.6, detail = "Merging intervals for BED - updated logic using IRanges")
       
       # NEW interval merging approach for BED using IRanges
@@ -945,11 +1004,53 @@ server <- function(input, output, session) {
       incProgress(0.8, detail = "Constructing minimal BED DataFrame")
       
       chrom_name <- if (!is.null(input$nucleotide_id) && nzchar(input$nucleotide_id)) {
+=======
+      incProgress(0.6, detail="Performing pure R grouping for BED")
+      merged_bed <- list()
+      merged_index <- 1
+      
+      # Initialize region
+      cStart <- bed_data$Position[1]
+      cLen   <- nchar(bed_data$OligoConformation[1])
+      cEnd   <- cStart + cLen - 1
+      cMaxZ  <- bed_data$max_Z_Score[1]
+      
+      for(i in 2:nrow(bed_data)){
+        p     <- bed_data$Position[i]
+        pLen  <- nchar(bed_data$OligoConformation[i])
+        pEnd  <- p + pLen - 1
+        pZ    <- bed_data$max_Z_Score[i]
+        
+        # Decide if we merge or finalize
+        if(p <= (cEnd + limit_value)){
+          # Merge
+          cEnd  <- max(cEnd, pEnd)
+          cMaxZ <- max(cMaxZ, pZ)
+        } else {
+          # Finalize old
+          merged_bed[[merged_index]] <- list(start=cStart, end=cEnd, maxZ=cMaxZ)
+          merged_index <- merged_index + 1
+          
+          # Start new
+          cStart <- p
+          cEnd   <- pEnd
+          cMaxZ  <- pZ
+        }
+      }
+      
+      # finalize the last region
+      merged_bed[[merged_index]] <- list(start=cStart, end=cEnd, maxZ=cMaxZ)
+      
+      incProgress(0.8, detail="Constructing minimal BED DataFrame")
+      
+      chrom_name <- if (!is.null(input$nucleotide_id) && nzchar(input$nucleotide_id)){
+>>>>>>> 72619d254327dfdd3e635883db1c0acf07c63d26
         input$nucleotide_id
       } else {
         "chrom"
       }
       
+<<<<<<< HEAD
       # NEW: Read the FASTA to determine its length, so that we can adjust the end of intervals if needed
       fasta_set <- Biostrings::readDNAStringSet(original_fasta_file)
       dna <- toupper(as.character(fasta_set[[1]]))
@@ -986,6 +1087,28 @@ server <- function(input, output, session) {
       
       bed_final$start <- as.numeric(bed_final$start)
       bed_final$end <- as.numeric(bed_final$end)
+      bed_final$score <- as.numeric(bed_final$score)
+=======
+      bed_final <- data.frame(
+        chrom = character(0),
+        start = numeric(0),
+        end   = numeric(0),
+        score = numeric(0)
+      )
+>>>>>>> 72619d254327dfdd3e635883db1c0acf07c63d26
+      
+      for(i in seq_along(merged_bed)){
+        region_info <- merged_bed[[i]]
+        bed_final[i, ] <- c(
+          chrom_name,
+          region_info$start,
+          region_info$end,
+          region_info$maxZ
+        )
+      }
+      
+      bed_final$start <- as.numeric(bed_final$start)
+      bed_final$end   <- as.numeric(bed_final$end)
       bed_final$score <- as.numeric(bed_final$score)
       
       bed_data_reactive(bed_final)
