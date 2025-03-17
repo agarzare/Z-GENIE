@@ -3,6 +3,13 @@
 Z-GENIE is a Shiny application designed for interactive bioinformatics analysis, including sequence alignment and visualization.
 
 ## Installation Instructions
+### Install R and RStudio
+If not running in browser on the shiny server, you will need to have R and RStudio installed on your device. 
+Below are links on how to install each component.
+Installing R: https://cran.r-project.org/
+Installing RStudio: https://www.rstudio.com/
+
+
 
 ### Clone the Repository
 
