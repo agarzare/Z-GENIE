@@ -46,3 +46,24 @@ library(shiny)
 # Run the Shiny app
 runApp(system.file("shinyapp", package = "ZGENIE"))
 ```
+
+
+## Compiling Z-Hunt
+### Docker-Based Compilation
+
+The following Docker command was used to compile `zhun3.c` with GCC version 10:
+
+```bash
+docker run --rm --platform linux/amd64 \
+  -v ~/zhunt-master:/src \
+  -w /src gcc:10 \
+  /bin/bash -c "gcc -march=x86-64 -mtune=generic -o bin/zhunt zhun3.c -lm"
+```
+
+### Local Compilation
+
+For local compilation, the source file was compiled using the command:
+
+```bash
+gcc zhun3.c -o /bin/zhunt
+```
