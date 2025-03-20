@@ -150,7 +150,7 @@ ui <- dashboardPage(
                   condition = "input.input_source=='fetch'",
                   textInput(
                      "nucleotide_id",
-                     "Enter Nucleotide ID (e.g., \"U81553.1\")",
+                     "Enter Nucleotide ID (e.g., \"NC_007605.1\")",
                      value = ""
                   ),
                   actionButton("fetch", "Fetch and Save FASTA"),
