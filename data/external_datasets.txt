@@ -1,0 +1,9 @@
+GEO: GSE252954 – ZIP-Seq & CUT&Tag rice Z-DNA peaks (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE252954) 
+
+Rice Os-Nipponbare-Reference-IRGSP-1.0 Genome Assembly FASTA files 
+	osa1_r7.asm.chrs.fa.gz - Genome assembly - Chromosomes 1-12 only
+	(https://rice.uga.edu/osa1r7_download/osa1_r7.asm.chrs.fa.gz)
+
+Ray et al. 2011 ADAM12 sequence retrieved from NCBI: NT_030059.13
+	NT_030059.13:78505424-78881591 Homo sapiens chromosome 10 genomic contig, GRCh37.p13 Primary Assembly
+

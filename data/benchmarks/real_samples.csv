@@ -1,0 +1,39 @@
+Index,RefSeq,desc,size
+2,NC_001604.1,Enterobacteria phage T7,39937
+3,NC_001417.2,Enterobacteria phage lambda,48502
+4,NC_001489.1,HIV-1 (Human immunodeficiency virus 1),9181
+5,NC_002645.1,Zika virus,10794
+6,NC_003977.2,Dengue virus 2,10723
+8,NC_004102.1,SARS-CoV (2003),29727
+9,NC_006213.1,Chikungunya virus,11805
+11,NC_000913.3,Escherichia coli K-12 MG1655,4641652
+12,NC_000962.3,Mycobacterium tuberculosis H37Rv,4411532
+14,NC_003197.2,Salmonella enterica serovar Typhimurium LT2,4857432
+15,NC_002945.4,Vibrio cholerae O1 biovar El Tor N16961 chromosome I,2980717
+18,NC_007779.1,Mycobacterium avium 104,5049103
+20,NC_014376.1,Corynebacterium pseudotuberculosis FRC41,2322082
+22,NC_009089.1,Shigella sonnei 53G,4893621
+23,NC_010468.1,Klebsiella pneumoniae 342,5472315
+24,NC_021149.1,Staphylococcus aureus subsp. aureus JKD6009,2798522
+25,NC_022215.1,Enterococcus faecium Aus0004,2765010
+26,NC_017208.1,Bacillus thuringiensis BMB171,5692059
+27,NC_015713.1,Neisseria meningitidis 053442,2270413
+28,NC_009615.1,Haemophilus influenzae R2846,1910038
+29,NC_008463.1,Francisella tularensis subsp. tularensis Schu S4,1891845
+30,NC_009092.1,Vibrio vulnificus CMCP6,3318627
+31,NC_018080.1,Legionella pneumophila Paris,3503610
+33,NC_017351.1,Brucella abortus A13334,3261377
+34,NC_003028.3,Mycobacterium leprae TN,3269219
+35,NC_011916.1,Pasteurella multocida 36950,2222050
+36,NC_003279.8,Caenorhabditis elegans Chromosome I,15084174
+37,NC_003280.10,Caenorhabditis elegans Chromosome II,16558900
+39,NC_003282.8,Caenorhabditis elegans Chromosome IV,17493614
+40,NC_003283.11,Caenorhabditis elegans Chromosome V,20921301
+42,NC_004353.4,Drosophila melanogaster chromosome 4,1348131
+43,NC_004354.4,Drosophila melanogaster chromosome X,23542271
+44,NC_024512.1,Drosophila melanogaster chromosome Y,3667352
+46,NC_025761.1, Rhodopsona rubiginosa mitochondrion,15248
+47,NC_003070.9,Arabidopsis thaliana Chromosome 1,30427671
+48,NC_029256.1,Oryza sativa Japonica Group Chromosome 1,43270923
+49,NC_000022.11,Homo sapiens Chromosome 22,50818468
+50,NC_000014.9,Homo sapiens Chromosome 14,107043718

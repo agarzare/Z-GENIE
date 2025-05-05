@@ -1,0 +1,223 @@
+
+```{r}
+# -------------------------------
+# Load required libraries
+# -------------------------------
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(scales)  # for comma formatting
+
+# -------------------------------
+# 1. Data Import and Column Name Adjustments
+# -------------------------------
+df1 <- read.csv("/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/cleaned_output_ISS_Pal.csv", stringsAsFactors = FALSE)
+df2 <- read.csv("/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/real_samples.csv", stringsAsFactors = FALSE)
+
+colnames(df1) <- c("nuc_ID", "step", "time", "run_type", "z_thresh")
+colnames(df2) <- c("Index", "nuc_ID", "desc", "genome_size")
+
+# -------------------------------
+# 2. Data Merge and Transformation
+# -------------------------------
+benchmark_data <- merge(df1, df2, by = "nuc_ID", all.x = TRUE)
+benchmark_data$Index <- NULL
+
+# Manually update missing description and genome_size for specific nuc_IDs
+NC_034440.1 <- benchmark_data$nuc_ID == "NC_034440.1"
+benchmark_data$desc[NC_034440.1] <- "Bat coronavirus isolate PREDICT/PDF-2180"
+benchmark_data$genome_size[NC_034440.1] <- as.numeric(29642)
+
+NC_028250.1 <- benchmark_data$nuc_ID == "NC_028250.1"
+benchmark_data$desc[NC_028250.1] <- "Rosellinia necatrix partitivirus 6 CP gene for capsid protein, complete cds, strain: W113"
+benchmark_data$genome_size[NC_028250.1] <- as.numeric(2499)
+
+U81553.1 <- benchmark_data$nuc_ID == "U81553.1"
+benchmark_data$desc[U81553.1] <- "Mycobacteriophage D29 dCMP deaminase (g1) gene, partial cds, g2, excisase (xis) and integrase (int) genes"
+benchmark_data$genome_size[U81553.1] <- as.numeric(2592)
+
+NC_001802.1 <- benchmark_data$nuc_ID == "NC_001802.1"
+benchmark_data$desc[NC_001802.1] <- "Human immunodeficiency virus 1"
+benchmark_data$genome_size[NC_001802.1] <- as.numeric(9181)
+
+NC_002516.2 <- benchmark_data$nuc_ID == "NC_002516.2"
+benchmark_data$desc[NC_002516.2] <- "Pseudomonas aeruginosa PAO1"
+benchmark_data$genome_size[NC_002516.2] <- as.numeric(6264404)
+
+NC_017333.1 <- benchmark_data$nuc_ID == "NC_017333.1"
+benchmark_data$desc[NC_017333.1] <- "Staphylococcus aureus subsp. aureus ST398"
+benchmark_data$genome_size[NC_017333.1] <- as.numeric(2872582)
+
+# Suppress scientific notation
+options(scipen = 999)
+
+# Classify genomes by size
+benchmark_data <- benchmark_data %>%
+  mutate(size_category = case_when(
+    genome_size < 3e6 ~ "Small",
+    genome_size >= 3e6 & genome_size <= 10e6 ~ "Medium",
+    genome_size > 10e6 ~ "Large"
+  ))
+
+benchmark_data$size_category <- factor(benchmark_data$size_category, 
+                                       levels = c("Small", "Medium", "Large"))
+
+# Convert 'step' to an ordered factor
+benchmark_data$step <- factor(benchmark_data$step, 
+                              levels = c("fetch", "zhunt", "zscoreproc", "bedfile"))
+
+rm(NC_001802.1, NC_002516.2, NC_017333.1, NC_034440.1, 
+   NC_028250.1, U81553.1)
+
+write.csv(benchmark_data, 
+          "/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/benchmark_data.csv", 
+          row.names = FALSE)
+```
+
+
+```{r}
+# -------------------------------
+# 3. Scatter Plot with Linear Trends
+# -------------------------------
+p_scatter <- ggplot(benchmark_data, 
+                    aes(x = genome_size, y = time, 
+                        color = size_category, shape = step)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE, aes(linetype = step)) +
+  facet_wrap(~ step, scales = "free_y", ncol = 1) +
+  # Use a color-blind friendly palette
+  scale_color_brewer(palette = "Dark2") +
+  scale_linetype_discrete() +
+  # Give extra space around the data
+  scale_x_continuous(labels = comma, expand = expansion(mult = c(0.05, 0.05))) +
+  scale_y_continuous(labels = comma, expand = expansion(mult = c(0.05, 0.05))) +
+  # Remove main title, keep axes/legend labels
+  labs(x = "Genome Size (bp)",
+       y = "Processing Time (seconds)",
+       color = "Genome Size Category",
+       shape = "Processing Step",
+       linetype = "Processing Step") +
+  # Increase base text size and tweak theme
+  theme_minimal(base_size = 16) +
+  theme(
+    axis.title = element_text(face = "bold", size = 18),
+    axis.text = element_text(size = 14),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 16),
+    strip.text = element_text(size = 16),
+    legend.position = "bottom"
+  )
+
+# Print the scatter plot
+print(p_scatter)
+
+# ggsave("/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/benchmark_scatter.pdf", 
+       # plot = p_scatter, width = 14, height = 10, dpi = 300)
+
+# -------------------------------
+# 4. Bar Plot of Average Processing Times
+# -------------------------------
+avg_times <- benchmark_data %>%
+  group_by(size_category, step) %>%
+  summarize(mean_time = mean(time, na.rm = TRUE)) %>%
+  na.omit()
+
+# -------------------------------
+# 5. Total Processing Time per NCBI ID (Add 5-min Reference)
+# -------------------------------
+total_times <- benchmark_data %>%
+  group_by(nuc_ID, genome_size, size_category, desc) %>%
+  summarize(total_time = sum(time, na.rm = TRUE)) %>%
+  ungroup()
+
+p_total <- ggplot(total_times, aes(x = genome_size, y = total_time, color = size_category)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_color_brewer(palette = "Dark2") +
+  scale_x_continuous(labels = comma, expand = expansion(mult = c(0.05, 0.05))) +
+  scale_y_continuous(labels = comma, expand = expansion(mult = c(0.05, 0.05))) +
+  labs(x = "Genome Size (bp)",
+       y = "Total Processing Time (log10(seconds))",
+       color = "Genome Size Category") +
+  theme_minimal(base_size = 16) +
+  theme(
+    axis.title = element_text(face = "bold", size = 18),
+    axis.text = element_text(size = 14),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 16),
+    legend.position = "bottom"
+  )
+
+# Add a dashed line at 300 seconds (5 minutes), plus a label
+p_total <- p_total +
+  geom_hline(yintercept = 300, linetype = "dashed", color = "red") +
+  annotate("text", x = Inf, y = 300, label = "300 s (5 min)", 
+           hjust = 1.1, vjust = -0.5, color = "red", size = 5) + scale_y_log10() 
+
+print(p_total)
+
+# ggsave("/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/benchmark_total_time.pdf", 
+#        plot = p_total, width = 14, height = 10, dpi = 300)
+
+
+```
+
+##combined Figure for Publication 032025
+```{r}
+library(ggplot2)
+library(patchwork)
+
+# 1) Top plot: Show color (size_category) and shape (step), remove linetype
+p_scatter2 <- p_scatter +
+  scale_color_brewer(
+    name = "Genome Size Category",
+    palette = "Dark2",
+    guide = guide_legend(order = 1)
+  ) +
+  scale_shape_discrete(
+    name = "Processing Step",
+    guide = guide_legend(order = 2)
+  ) +
+  # Remove linetype legend entirely
+  guides(linetype = "none") +
+  # Smaller text, legends at bottom
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",      # place legends side by side
+    legend.direction = "horizontal",
+    legend.key.size = unit(0.4, "cm"),
+    legend.text = element_text(size = 8),
+    legend.title = element_text(size = 9)
+  )
+p_total2 <- p_total +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    legend.direction = "horizontal",
+    legend.key.size = unit(0.4, "cm"),
+    legend.text = element_text(size = 8),
+    legend.title = element_text(size = 9)
+  )
+final_plot <- p_scatter2 / p_total2 +
+  plot_layout(ncol = 1, guides = "keep") +  # do NOT collect legends
+  plot_annotation(
+    tag_levels = "A", 
+    tag_prefix = "(",
+    tag_suffix = ")"
+  )
+ggsave(
+  filename = "/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/Figure_4.tiff",
+  plot = final_plot,
+  width = 7.2, 
+  height = 10, 
+  units = "in",
+  dpi = 600,
+  compression = "lzw"
+)
+
+```
+  
+  
+  

@@ -1,0 +1,321 @@
+###Figure 1-- Z-GENIE Workflow
+```{r}
+# -------------------------------------------------------
+# R Script: Z-GENIE Pipeline Overview (Publication-Ready)
+# Rectangular Nodes, Large Font, Dashed Borders
+# (A) Input, (B) Processing, (C) Output, (D) Visualization
+# -------------------------------------------------------
+
+# 1) Install/load packages if needed:
+# install.packages("DiagrammeR")
+# install.packages("magick") # if you want to convert PNG to TIFF
+library(DiagrammeR)
+library(magick)  # uncomment if using the conversion step
+
+# 2) Create the Graph
+graph <- grViz("
+digraph ZGENIE_Pipeline {
+
+  // Global graph attributes
+  graph [
+    fontname = \"Helvetica\",
+    fontsize = 18,
+    rankdir = TB,
+    center = true,
+    ranksep = 1.0,
+    nodesep = 0.7
+  ]
+
+  // Default node style
+  node [
+    shape = box,
+    style = filled,
+    fillcolor = \"white\",
+    color = \"#000000\",
+    fontname = \"Helvetica\",
+    fontsize = 18,
+    margin = \"0.3,0.2\"
+  ]
+
+  // Default edge style
+  edge [
+    color = \"#000000\",
+    fontname = \"Helvetica\",
+    fontsize = 18,
+    arrowhead = normal
+  ]
+
+  // =====================================================
+  // (A) INPUT SUBGRAPH (dashed border, light teal)
+  // =====================================================
+  subgraph clusterA {
+    label = \"(A) DATA INPUT & CURATION\"
+    style = \"filled,dashed\"
+    color = \"#E0F7FA\"   // Light teal
+    fontsize = 18
+    fontname = \"Helvetica\"
+
+    A_data [
+      label = \"1. FASTA\\n2. NCBI ID\\n3. Manual DNA\",
+      shape = box,
+      fillcolor = \"white\"
+    ]
+  }
+
+  // =====================================================
+  // (B) PROCESSING SUBGRAPH (dashed border, light green)
+  // =====================================================
+  subgraph clusterB {
+    label = \"(B) PROCESSING                                                                                                            \"
+    style = \"filled,dashed\"
+    color = \"#F1F8E9\"   // Light green
+    fontsize = 18
+    fontname = \"Helvetica\"
+
+    B_zhunt [
+      label = \"Z-Hunt Execution\\n(Raw Output)\",
+      shape = box,
+      fillcolor = \"white\"
+    ]
+
+    C_core [
+      label = <<B>Z-GENIE CORE</B><BR/><BR/>
+               1. Accepts raw Z-Hunt output (predicted Z-DNA).<BR/>
+               2. Identifies isolated ZFS (\\\"singletons\\\") &amp; clusters (\\\"mountains\\\").<BR/>
+               3. Generates CSV &amp; BED for downstream use.>,
+      shape = box,
+      fillcolor = \"white\"
+    ]
+  }
+
+  // =====================================================
+  // (C) OUTPUT SUBGRAPH (dashed border, light orange)
+  // =====================================================
+  subgraph clusterC {
+    label = \"(C) OUTPUT                          \"
+    style = \"filled,dashed\"
+    color = \"#FFF3E0\"   // Light orange
+    fontsize = 18
+    fontname = \"Helvetica\"
+
+    D_output [
+      label = \"Output Files\\n(CSV &amp; BED)\",
+      shape = box,
+      fillcolor = \"white\"
+    ]
+  }
+
+  // =====================================================
+  // (D) VISUALIZATION SUBGRAPH (dashed border, light purple)
+  // =====================================================
+  subgraph clusterD {
+    label = \"(D) VISUALIZATION                                        \"
+    style = \"filled,dashed\"
+    color = \"#E8EAF6\"   // Light purple
+    fontsize = 18
+    fontname = \"Helvetica\"
+
+    E_visual [
+      label = \"1. Plotly scatterplots\\n2. Interactive tables\\n3. Multiple sequence alignment\",
+      shape = box,
+      fillcolor = \"white\"
+    ]
+  }
+
+  // =====================================================
+  // EDGES (ARROWS)
+  // =====================================================
+  // A_data -> B_zhunt
+  A_data -> B_zhunt [
+    label = \"  (User uploads sequences\\nvia web browser)\"
+  ]
+
+  // B_zhunt -> C_core
+  B_zhunt -> C_core [
+    label = \"  (User supplies Z-Hunt parameters)\"
+  ]
+
+  // C_core -> D_output
+  C_core -> D_output [
+    label = \"  (Z-GENIE processes\\nraw data)\"
+  ]
+
+  // D_output -> E_visual
+  D_output -> E_visual [
+    label = \"  Exports for additional\\nanalysis/graphs\"
+  ]
+}
+")
+
+library(tidyverse)  # for %>% pipes
+library(DiagrammeR)
+library(DiagrammeRsvg)  # for conversion to svg
+library(rsvg)  # for saving svg
+
+graph %>%
+    export_svg() %>%
+    charToRaw %>% 
+    rsvg_pdf("~/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Figures/fig1.pdf")
+
+```
+
+
+
+###Figure 2 -- Mountain Example
+
+
+```{r}
+EBV <- read.table("~/Downloads/EBV_fasta.Z.SCORE", quote="\"", comment.char="")
+EBV$length <- nchar(EBV$V4)
+EBV$Position <- 1:length(EBV$V4)
+EBV <- EBV[,-c(1:2,4)]
+colnames(EBV) <- c("ZScore", "length", "Position")
+EBV$EndPosition <- EBV$Position + (EBV$length - 1)
+
+library(seqinr)
+EBVfasta <- read.fasta('/Users/angelgarzareyna/Downloads/EBV_ NC_007605.1.fasta')
+EBV_Filtered_Z_GENIE_output_200 <- read.csv("~/Downloads/EBV_Filtered_Z_GENIE_output_200.csv")
+
+```
+
+###setup data 
+```{r}
+# 1) Extract the genome vector
+genome <- EBVfasta$NC_007605.1  # Character vector of single nucleotides
+
+# 2) Ensure your Position/EndPosition are within the genome length
+genome_length <- length(genome)
+
+# 3) Add single-nucleotide and subsequence columns
+EBV$Nucleotide <- genome[ EBV$Position ]  # single base at each Position
+
+EBV$DNASequence <- sapply(seq_len(nrow(EBV)), function(i) {
+  startPos <- EBV$Position[i]
+  endPos   <- EBV$EndPosition[i]
+  
+  # Safeguard if EndPosition exceeds genome length
+  if (endPos > genome_length) {
+    endPos <- genome_length
+  }
+  
+  # Collapse into a single string
+  paste(genome[startPos:endPos], collapse = "")
+})
+
+# Identify the maximum Position that meets the threshold
+last_threshold_pos <- max(EBV$Position[ EBV$above_threshold ])
+
+# Create a new column for labeling
+EBV$label_nuc <- NA_character_
+
+# For all above-threshold rows, default to the single base
+EBV$label_nuc[EBV$above_threshold] <- EBV$Nucleotide[EBV$above_threshold]
+
+# For the last threshold position, show the entire DNASequence
+EBV$label_nuc[ EBV$Position == last_threshold_pos ] <- 
+  EBV$DNASequence[ EBV$Position == last_threshold_pos ]
+```
+
+
+```{r}
+# Example: label every point with the single base (or NA if missing)
+EBV$label_nuc <- EBV$Nucleotide  # or however you store your per-position base
+EBV$label_nuc <- toupper(EBV$label_nuc)
+
+
+library(ggplot2)
+library(dplyr)
+
+p1 <- ggplot() +
+  # 1) Grey points outside threshold (context only)
+  geom_point(
+    data = subset(EBV, above_threshold == FALSE),
+    aes(x = Position, y = ZScore),
+    color = "grey50", size = 3, alpha = 0.5
+  ) +
+  
+  # 2) Grey line for overall shape
+  geom_line(
+    data = EBV,
+    aes(x = Position, y = ZScore, group = 1),
+    color = "grey50", alpha = 0.5
+  ) +
+  
+  # 3) Emphasize points within the mountain region
+  geom_point(
+    data = subset(EBV, above_threshold == TRUE & Position >= 150542 & Position <= 150568),
+    aes(x = Position, y = ZScore),
+    color = "red", size = 4
+  ) +
+  
+  # 4) Show bracket lines only for the mountain region
+  geom_errorbarh(
+    data = subset(EBV, above_threshold == TRUE & Position >= 150542 & Position <= 150568),
+    aes(y = ZScore, xmin = Position, xmax = EndPosition),
+    color = "purple", size = 1, height = 0.2, alpha = 0.8
+  ) +
+  
+  # 5) **Label ALL points** that have a defined label in EBV$label_nuc
+  geom_text(
+    data = subset(EBV, !is.na(label_nuc)),
+    aes(x = Position, y = ZScore, label = label_nuc),
+    vjust = -1,       # move label slightly above the point
+    size = 5,
+    color = "black"   # or map color to threshold if desired
+  ) +
+  
+  # 6) Threshold line
+  geom_hline(yintercept = 200, linetype = "dotted", color = "red", size = 2) +
+  
+  # 7) Region boundaries
+  geom_vline(xintercept = c(150542, 150568), linetype = "dotted", color = "blue", size = 1) +
+  
+  # 8) Light highlight rectangle
+  annotate("rect", xmin = 150542, xmax = 150568, ymin = 1, ymax = 43000,
+           fill = "blue", alpha = 0.05) +
+  
+  # 9) Log-scale on Y-axis
+  scale_y_log10() +
+  
+  # 10) Labels
+  labs(
+    title = "Z-DNA 'Mountain' Plot for EBV",
+    x = "Genomic Position (bp)",
+    y = "Z-Score"
+  ) +
+  
+  # 11) Increase font sizes
+  theme_minimal(base_size = 18) +
+  theme(
+    plot.title  = element_text(face = "bold", hjust = 0.5, size = 0),
+    axis.title  = element_text(face = "bold", size = 18),
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 14),
+    axis.text.y = element_text(size = 14)
+  ) +
+  geom_text(
+  data = subset(EBV, !is.na(label_nuc)),
+  aes(x = Position, y = ZScore, label = label_nuc, color = above_threshold),
+  vjust = -1, size = 5
+) +
+scale_color_manual(values = c("TRUE" = "red", "FALSE" = "grey50"))+
+  # 12) Zoom in
+  coord_cartesian(xlim = c(150532, 150578), ylim = c(1, 43000)) + scale_color_manual(
+  name   = "Z-DNA Threshold",               # Legend title
+  values = c("TRUE" = "red", "FALSE" = "grey50"), 
+  labels = c("TRUE" = "≥ 200 (Above)",      # Label for TRUE
+             "FALSE" = "< 200 (Below)")     # Label for FALSE
+)
+
+
+p1
+
+ggsave("Figures/EBV.tiff", p1, 
+  width = 6.9, height = 5, units = "in",
+  dpi = 600, compression = "lzw"
+)
+```
+
+```{r}
+
+```
+

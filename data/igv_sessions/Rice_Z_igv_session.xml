@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Session genome="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/osa1_r7.asm.chrs.fa" locus="Chr1:7917229-7917971" version="8">
+    <Resources>
+        <Resource path="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010917_ZDNA-IP-1.bedgraph" type="bedgraph"/>
+        <Resource path="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010922_ZDNA-CUT_Tag-2.bedgraph" type="bedgraph"/>
+        <Resource path="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010921_ZDNA-CUT_Tag-1.bedgraph" type="bedgraph"/>
+        <Resource path="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010920_ZDNA-igG.bedgraph" type="bedgraph"/>
+        <Resource path="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010918_ZDNA-IP-2.bedgraph" type="bedgraph"/>
+        <Resource path="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010923_4acC.bedgraph" type="bedgraph"/>
+        <Resource path="/Users/angelgarzareyna/Downloads/Rice_868_Chr1_600_Z-GENIE_Minimal.bed" type="bed"/>
+        <Resource path="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010919_ZDNA-Input.bedgraph" type="bedgraph"/>
+    </Resources>
+    <Panel height="675" name="DataPanel" width="993">
+        <Track attributeKey="Rice_868_Chr1_600_Z-GENIE_Minimal.bed" clazz="org.broad.igv.track.FeatureTrack" fontSize="10" groupByStrand="false" height="81" id="/Users/angelgarzareyna/Downloads/Rice_868_Chr1_600_Z-GENIE_Minimal.bed" name="Rice_868_Chr1_600_Z-GENIE_Minimal.bed" visible="true"/>
+        <Track attributeKey="GSM8010920_ZDNA-igG.bedgraph" autoScale="true" clazz="org.broad.igv.track.DataSourceTrack" colorScale="ContinuousColorScale;0.0;69.13059997558594;255,255,255;0,0,178" displayMode="SQUISHED" fontSize="10" height="82" id="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010920_ZDNA-igG.bedgraph" name="GSM8010920_ZDNA-igG.bedgraph" renderer="LINE_PLOT" visible="true" windowFunction="absoluteMax">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="219.175" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track attributeKey="GSM8010918_ZDNA-IP-2.bedgraph" autoScale="true" clazz="org.broad.igv.track.DataSourceTrack" colorScale="ContinuousColorScale;0.0;120.96199798583984;255,255,255;0,0,178" displayMode="SQUISHED" fontSize="10" height="82" id="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010918_ZDNA-IP-2.bedgraph" name="GSM8010918_ZDNA-IP-2.bedgraph" renderer="LINE_PLOT" visible="true" windowFunction="absoluteMax">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="270.331" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track attributeKey="GSM8010917_ZDNA-IP-1.bedgraph" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" colorScale="ContinuousColorScale;0.0;10.0;255,255,255;0,0,178" displayMode="SQUISHED" fontSize="10" height="82" id="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010917_ZDNA-IP-1.bedgraph" name="GSM8010917_ZDNA-IP-1.bedgraph" renderer="LINE_PLOT" visible="true" windowFunction="absoluteMax">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track attributeKey="GSM8010922_ZDNA-CUT_Tag-2.bedgraph" autoScale="true" clazz="org.broad.igv.track.DataSourceTrack" colorScale="ContinuousColorScale;0.0;10.0;255,255,255;0,0,178" displayMode="SQUISHED" fontSize="10" height="82" id="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010922_ZDNA-CUT_Tag-2.bedgraph" name="GSM8010922_ZDNA-CUT_Tag-2.bedgraph" renderer="LINE_PLOT" visible="true" windowFunction="absoluteMax">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="939.936" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track attributeKey="GSM8010921_ZDNA-CUT_Tag-1.bedgraph" autoScale="true" clazz="org.broad.igv.track.DataSourceTrack" colorScale="ContinuousColorScale;0.0;10.0;255,255,255;0,0,178" displayMode="SQUISHED" fontSize="10" height="82" id="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010921_ZDNA-CUT_Tag-1.bedgraph" name="GSM8010921_ZDNA-CUT_Tag-1.bedgraph" renderer="LINE_PLOT" visible="true" windowFunction="absoluteMax">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="1221.04" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track attributeKey="GSM8010919_ZDNA-Input.bedgraph" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" colorScale="ContinuousColorScale;0.0;25.271799087524414;255,255,255;0,0,178" displayMode="SQUISHED" fontSize="10" height="82" id="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010919_ZDNA-Input.bedgraph" name="GSM8010919_ZDNA-Input.bedgraph" renderer="LINE_PLOT" visible="true" windowFunction="absoluteMax">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="25.2718" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track attributeKey="GSM8010923_4acC.bedgraph" autoScale="true" clazz="org.broad.igv.track.DataSourceTrack" colorScale="ContinuousColorScale;0.0;756.4705200195312;255,255,255;0,0,178" displayMode="SQUISHED" fontSize="10" height="82" id="/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Rice/GSE252954_RAW/GSM8010923_4acC.bedgraph" name="GSM8010923_4acC.bedgraph" renderer="LINE_PLOT" visible="true" windowFunction="absoluteMax">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="801.676" minimum="0.0" type="LINEAR"/>
+        </Track>
+    </Panel>
+    <Panel height="56" name="FeaturePanel" width="993">
+        <Track attributeKey="Reference sequence" clazz="org.broad.igv.track.SequenceTrack" displayMode="SQUISHED" fontSize="10" height="24" id="Reference sequence" name="Reference sequence" sequenceTranslationStrandValue="+" shouldShowTranslation="true" visible="true"/>
+    </Panel>
+    <PanelLayout dividerFractions="0.9325068870523416"/>
+    <HiddenAttributes/>
+</Session>
