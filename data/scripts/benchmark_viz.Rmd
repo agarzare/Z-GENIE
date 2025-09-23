@@ -11,8 +11,8 @@ library(scales)  # for comma formatting
 # -------------------------------
 # 1. Data Import and Column Name Adjustments
 # -------------------------------
-df1 <- read.csv("/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/cleaned_output_ISS_Pal.csv", stringsAsFactors = FALSE)
-df2 <- read.csv("/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/real_samples.csv", stringsAsFactors = FALSE)
+df1 <- read.csv("./data/benchmarks/cleaned_output_ISS_Pal.csv", stringsAsFactors = FALSE)
+df2 <- read.csv("./data/benchmarks/real_samples.csv", stringsAsFactors = FALSE)
 
 colnames(df1) <- c("nuc_ID", "step", "time", "run_type", "z_thresh")
 colnames(df2) <- c("Index", "nuc_ID", "desc", "genome_size")
@@ -48,6 +48,11 @@ NC_017333.1 <- benchmark_data$nuc_ID == "NC_017333.1"
 benchmark_data$desc[NC_017333.1] <- "Staphylococcus aureus subsp. aureus ST398"
 benchmark_data$genome_size[NC_017333.1] <- as.numeric(2872582)
 
+#Correcting NA from Figure 4; NC_009457.1 needs manual curation -- updated 09/22/2025
+NC_009457.1 <- benchmark_data$nuc_ID == "NC_009457.1"
+benchmark_data$desc[NC_009457.1] <- "Vibrio cholerae O395 chromosome 1, complete sequence"
+benchmark_data$genome_size[NC_009457.1] <- as.numeric(3024069)
+
 # Suppress scientific notation
 options(scipen = 999)
 
@@ -70,7 +75,7 @@ rm(NC_001802.1, NC_002516.2, NC_017333.1, NC_034440.1,
    NC_028250.1, U81553.1)
 
 write.csv(benchmark_data, 
-          "/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/benchmark_data.csv", 
+          "./data/benchmarks/benchmark_data.csv", 
           row.names = FALSE)
 ```
 
@@ -109,7 +114,7 @@ p_scatter <- ggplot(benchmark_data,
   )
 
 # Print the scatter plot
-print(p_scatter)
+# print(p_scatter)
 
 # ggsave("/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/benchmark_scatter.pdf", 
        # plot = p_scatter, width = 14, height = 10, dpi = 300)
@@ -137,7 +142,7 @@ p_total <- ggplot(total_times, aes(x = genome_size, y = total_time, color = size
   scale_x_continuous(labels = comma, expand = expansion(mult = c(0.05, 0.05))) +
   scale_y_continuous(labels = comma, expand = expansion(mult = c(0.05, 0.05))) +
   labs(x = "Genome Size (bp)",
-       y = "Total Processing Time (log10(seconds))",
+       y = "Total Processing Time (seconds)",
        color = "Genome Size Category") +
   theme_minimal(base_size = 16) +
   theme(
@@ -154,7 +159,7 @@ p_total <- p_total +
   annotate("text", x = Inf, y = 300, label = "300 s (5 min)", 
            hjust = 1.1, vjust = -0.5, color = "red", size = 5) + scale_y_log10() 
 
-print(p_total)
+# print(p_total)
 
 # ggsave("/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/benchmark_total_time.pdf", 
 #        plot = p_total, width = 14, height = 10, dpi = 300)
@@ -208,7 +213,7 @@ final_plot <- p_scatter2 / p_total2 +
     tag_suffix = ")"
   )
 ggsave(
-  filename = "/Users/angelgarzareyna/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/data/benchmarks/Figure_4.tiff",
+  filename = "./data/benchmarks/Figure_4.tiff",
   plot = final_plot,
   width = 7.2, 
   height = 10, 

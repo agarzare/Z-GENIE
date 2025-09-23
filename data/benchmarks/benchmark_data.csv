@@ -103,10 +103,10 @@
 "NC_009092.1","bedfile",7.81258082389832,"both",NA,"Vibrio vulnificus CMCP6",3318627,"Medium"
 "NC_009092.1","zhunt",67.7519128322601,"both",NA,"Vibrio vulnificus CMCP6",3318627,"Medium"
 "NC_009092.1","fetch",2.97631311416626,"both",NA,"Vibrio vulnificus CMCP6",3318627,"Medium"
-"NC_009457.1","zhunt",44.7228238582611,"both",NA,NA,NA,NA
-"NC_009457.1","bedfile",4.2759439945221,"both",NA,NA,NA,NA
-"NC_009457.1","fetch",1.70194578170776,"both",NA,NA,NA,NA
-"NC_009457.1","zscoreproc",7.859778881073,"both",600,NA,NA,NA
+"NC_009457.1","zhunt",44.7228238582611,"both",NA,"Vibrio cholerae O395 chromosome 1, complete sequence",3024069,"Medium"
+"NC_009457.1","bedfile",4.2759439945221,"both",NA,"Vibrio cholerae O395 chromosome 1, complete sequence",3024069,"Medium"
+"NC_009457.1","fetch",1.70194578170776,"both",NA,"Vibrio cholerae O395 chromosome 1, complete sequence",3024069,"Medium"
+"NC_009457.1","zscoreproc",7.859778881073,"both",600,"Vibrio cholerae O395 chromosome 1, complete sequence",3024069,"Medium"
 "NC_009615.1","zscoreproc",10.3964138031006,"both",600,"Haemophilus influenzae R2846",1910038,"Small"
 "NC_009615.1","bedfile",5.01673698425293,"both",NA,"Haemophilus influenzae R2846",1910038,"Small"
 "NC_009615.1","fetch",4.20958399772644,"both",NA,"Haemophilus influenzae R2846",1910038,"Small"

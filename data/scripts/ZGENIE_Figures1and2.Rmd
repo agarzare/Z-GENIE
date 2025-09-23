@@ -127,7 +127,7 @@ digraph ZGENIE_Pipeline {
   // =====================================================
   // A_data -> B_zhunt
   A_data -> B_zhunt [
-    label = \"  (User uploads sequences\\nvia web browser)\"
+    label = \"  (User uploads sequences \\n[recommended length < 20 Mb]\\nvia web browser)\"
   ]
 
   // B_zhunt -> C_core
@@ -155,10 +155,169 @@ library(rsvg)  # for saving svg
 graph %>%
     export_svg() %>%
     charToRaw %>% 
-    rsvg_pdf("~/Desktop/GradSchool/G1/Rotation_1_Dr_Pisetsky/ZGENIE/Figures/fig1.pdf")
+    rsvg_pdf("./data/figures/Figure_1.pdf")
 
 ```
+# -------------------------------------------------------
+# Figure 1 — Z-GENIE Pipeline Overview (Publication-Ready)
+# Rectangular Nodes, Large Font, Dashed Borders
+# (A) Input, (B) Processing, (C) Output, (D) Visualization
+# -------------------------------------------------------
 
+# If you want the paper's stated limit to match the web app behavior,
+# also set this in the Shiny app (not required for the figure itself):
+# options(shiny.maxRequestSize = 100 * 1024^2)  # 100 MB
+
+library(DiagrammeR)
+library(DiagrammeRsvg)
+library(rsvg)
+library(magick)
+library(tidyverse)
+
+graph <- grViz("
+digraph ZGENIE_Pipeline {
+
+  // Global graph attributes
+  graph [
+    fontname = \"Helvetica\",
+    fontsize = 18,
+    rankdir = TB,
+    center = true,
+    ranksep = 1.0,
+    nodesep = 0.7
+  ]
+
+  // Default node style
+  node [
+    shape = box,
+    style = filled,
+    fillcolor = \"white\",
+    color = \"#000000\",
+    fontname = \"Helvetica\",
+    fontsize = 18,
+    margin = \"0.3,0.2\"
+  ]
+
+  // Default edge style
+  edge [
+    color = \"#000000\",
+    fontname = \"Helvetica\",
+    fontsize = 18,
+    arrowhead = normal
+  ]
+
+  // =====================================================
+  // (A) INPUT SUBGRAPH (dashed border, light teal)
+  // =====================================================
+  subgraph clusterA {
+    label = \"(A) DATA INPUT & CURATION\"
+    style = \"filled,dashed\"
+    color = \"#E0F7FA\"
+    fontsize = 18
+    fontname = \"Helvetica\"
+
+    A_data [
+      label = <<B>1. FASTA</B><BR ALIGN=\"LEFT\"/>
+               <B>2. NCBI ID</B><BR ALIGN=\"LEFT\"/>
+               <B>3. Manual DNA</B><BR/><BR ALIGN=\"LEFT\"/>
+               <FONT POINT-SIZE=\"16\">
+               Web upload &le; 100 MB;<BR ALIGN=\"LEFT\"/>
+               recommended per-sequence length &lt; 20 Mb
+               </FONT>>,
+      shape = box,
+      fillcolor = \"white\"
+    ]
+  }
+
+  // =====================================================
+  // (B) PROCESSING SUBGRAPH (dashed border, light green)
+  // =====================================================
+  subgraph clusterB {
+    label = \"(B) PROCESSING                                                                                                            \"
+    style = \"filled,dashed\"
+    color = \"#F1F8E9\"
+    fontsize = 18
+    fontname = \"Helvetica\"
+
+    B_zhunt [
+      label = \"Z-Hunt Execution\\n(Raw Output)\",
+      shape = box,
+      fillcolor = \"white\"
+    ]
+
+    C_core [
+      label = <<B>Z-GENIE CORE</B><BR/><BR/>
+               1. Accepts raw Z-Hunt output (predicted Z-DNA).<BR/>
+               2. Identifies isolated ZFS (\\\"singletons\\\") &amp; clusters (\\\"mountains\\\").<BR/>
+               3. Generates CSV &amp; BED for downstream use.>,
+      shape = box,
+      fillcolor = \"white\"
+    ]
+  }
+
+  // =====================================================
+  // (C) OUTPUT SUBGRAPH (dashed border, light orange)
+  // =====================================================
+  subgraph clusterC {
+    label = \"(C) OUTPUT                          \"
+    style = \"filled,dashed\"
+    color = \"#FFF3E0\"
+    fontsize = 18
+    fontname = \"Helvetica\"
+
+    D_output [
+      label = \"Output Files\\n(CSV &amp; BED)\",
+      shape = box,
+      fillcolor = \"white\"
+    ]
+  }
+
+  // =====================================================
+  // (D) VISUALIZATION SUBGRAPH (dashed border, light purple)
+  // =====================================================
+  subgraph clusterD {
+    label = \"(D) VISUALIZATION                                        \"
+    style = \"filled,dashed\"
+    color = \"#E8EAF6\"
+    fontsize = 18
+    fontname = \"Helvetica\"
+
+    E_visual [
+      label = \"1. Plotly scatterplots\\n2. Interactive tables\\n3. Multiple sequence alignment\",
+      shape = box,
+      fillcolor = \"white\"
+    ]
+  }
+
+  // =====================================================
+  // EDGES (ARROWS)
+  // =====================================================
+  // A_data -> B_zhunt (no size text here; it's now inside (A))
+  A_data -> B_zhunt [label = \"\"]
+
+  // B_zhunt -> C_core
+  B_zhunt -> C_core [
+    label = \"  (User supplies Z-Hunt parameters)\"
+  ]
+
+  // C_core -> D_output
+  C_core -> D_output [
+    label = \"  (Z-GENIE processes\\nraw data)\"
+  ]
+
+  // D_output -> E_visual
+  D_output -> E_visual [
+    label = \"  Exports for additional\\nanalysis/graphs\"
+  ]
+}
+")
+
+graph %>%
+  export_svg() %>%
+  charToRaw() %>%
+  rsvg_pdf("./data/figures/Figure_1.pdf")
+
+```
 
 
 ###Figure 2 -- Mountain Example
