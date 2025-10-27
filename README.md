@@ -1,6 +1,9 @@
 # Z-GENIE (Z-DNA GENomic Information Extractor)
 
-Z-GENIE is a Shiny application designed for interactive bioinformatics analysis, including sequence alignment and visualization. Limited web access available at https://i5h2oo-angel0i0garza0reyna.shinyapps.io/zgenie_shinyapp/.
+Z-GENIE is a Shiny application designed for interactive bioinformatics analysis, including sequence alignment and visualization. Limited web access available at:
+
+# https://i5h2oo-angel0i0garza0reyna.shinyapps.io/zgenie_shinyapp/.
+
 
 ## Installation Instructions
 ### Install R and RStudio
